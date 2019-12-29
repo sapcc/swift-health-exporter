@@ -1,0 +1,24 @@
+# HELP swift_dispersion_container_copies_expected Expected container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_expected gauge
+swift_dispersion_container_copies_expected 120
+# HELP swift_dispersion_container_copies_found Found container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_found gauge
+swift_dispersion_container_copies_found 120
+# HELP swift_dispersion_container_copies_missing Missing container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_missing gauge
+swift_dispersion_container_copies_missing 0
+# HELP swift_dispersion_container_overlapping Expected container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_overlapping gauge
+swift_dispersion_container_overlapping 0
+# HELP swift_dispersion_object_copies_expected Expected object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_expected gauge
+swift_dispersion_object_copies_expected 1965
+# HELP swift_dispersion_object_copies_found Found object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_found gauge
+swift_dispersion_object_copies_found 1965
+# HELP swift_dispersion_object_copies_missing Missing object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_missing gauge
+swift_dispersion_object_copies_missing 0
+# HELP swift_dispersion_object_overlapping Expected object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_overlapping gauge
+swift_dispersion_object_overlapping 0
