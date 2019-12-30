@@ -30,15 +30,15 @@ import (
 
 // ReconCollector implements the prometheus.Collector interface.
 type ReconCollector struct {
-	PathToExecutable string
-	Tasks            map[string]func(string, string, chan<- prometheus.Metric)
+	pathToExecutable string
+	tasks            map[string]func(string, string, chan<- prometheus.Metric)
 }
 
 // NewReconCollector creates a new ReconCollector.
 func NewReconCollector(pathToExecutable string) *ReconCollector {
 	return &ReconCollector{
-		PathToExecutable: pathToExecutable,
-		Tasks: map[string]func(string, string, chan<- prometheus.Metric){
+		pathToExecutable: pathToExecutable,
+		tasks: map[string]func(string, string, chan<- prometheus.Metric){
 			"diskUsage":    reconDiskUsageTask,
 			"driveAudit":   reconDriveAuditTask,
 			"md5":          reconMD5Task,
@@ -58,10 +58,10 @@ func (c *ReconCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements the prometheus.Collector interface.
 func (c *ReconCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
-	wg.Add(len(c.Tasks))
-	for name, task := range c.Tasks {
+	wg.Add(len(c.tasks))
+	for name, task := range c.tasks {
 		go func(name string, task func(string, string, chan<- prometheus.Metric)) {
-			task(name, c.PathToExecutable, ch)
+			task(name, c.pathToExecutable, ch)
 			wg.Done()
 		}(name, task)
 	}
@@ -277,12 +277,9 @@ func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- pro
 				continue
 			}
 
-			var val float64
-			var desc *prometheus.Desc
-			if server == "container" {
-				val = data.ContainerUpdaterSweepTime
-				desc = clusterCntrUpdaterSweepTimeDesc
-			} else {
+			val := data.ContainerUpdaterSweepTime
+			desc := clusterCntrUpdaterSweepTimeDesc
+			if server == "object" {
 				val = data.ObjectUpdaterSweepTime
 				desc = clusterObjUpdaterSweepTimeDesc
 			}

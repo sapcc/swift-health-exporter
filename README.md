@@ -7,8 +7,8 @@
 This exporter uses the `swift-dispersion-report` and `swift-recon` tools to
 emit Prometheus metrics about the health of an OpenStack Swift cluster.
 
-It has been tested with OpenStack Swift Train (v2.23.0) and above. For older
-versions of Swift, you might want to look at
+The exporter has been tested with OpenStack Swift Train (v2.23.0) and above.
+For older versions of Swift, you might want to look at
 [swift-health-statsd](https://github.com/sapcc/swift-health-statsd).
 
 ## Installation

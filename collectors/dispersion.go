@@ -68,13 +68,13 @@ var (
 
 // DispersionCollector implements the prometheus.Collector interface.
 type DispersionCollector struct {
-	PathToExecutable string
+	pathToExecutable string
 }
 
 // NewDispersionCollector creates a new DispersionCollector.
 func NewDispersionCollector(pathToExecutable string) *DispersionCollector {
 	return &DispersionCollector{
-		PathToExecutable: pathToExecutable,
+		pathToExecutable: pathToExecutable,
 	}
 }
 
@@ -100,7 +100,7 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 		} `json:"container"`
 	}
 
-	out, err := exec.Command(c.PathToExecutable, "-j").Output()
+	out, err := exec.Command(c.pathToExecutable, "-j").Output()
 	if err != nil {
 		logg.Error("swift-dispersion-report: %v", err)
 		return
