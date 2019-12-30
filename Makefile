@@ -43,7 +43,7 @@ static-check: FORCE
 	@$(GO) vet $(GO_BUILDFLAGS) $(GO_ALLPKGS)
 
 # detailed unit test run (incl. test coverage)
-build/%.cover.out: FORCE build/mock-swift-dispersion-report
+build/%.cover.out: FORCE build/mock-swift-dispersion-report build/mock-swift-recon
 	@printf "\e[1;36m>> go test $(subst _,/,$*)\e[0m\n"
 	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(subst _,/,$*)
 build/cover.out: $(GO_COVERFILES)
@@ -53,6 +53,9 @@ build/cover.html: build/cover.out
 
 build/mock-swift-dispersion-report: FORCE
 	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-dispersion-report'
+
+build/mock-swift-recon: FORCE
+	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-recon'
 
 clean: FORCE
 	rm -rf -- build

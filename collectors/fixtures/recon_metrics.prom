@@ -1,0 +1,122 @@
+# HELP swift_cluster_accounts_quarantined Quarantined accounts reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_quarantined gauge
+swift_cluster_accounts_quarantined{storage_ip="10.0.0.1"} 0
+swift_cluster_accounts_quarantined{storage_ip="10.0.0.2"} 0
+# HELP swift_cluster_accounts_replication_age Account replication age reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_replication_age gauge
+swift_cluster_accounts_replication_age{storage_ip="10.0.0.1"} 1.577664676578959e+09
+swift_cluster_accounts_replication_age{storage_ip="10.0.0.2"} 1.5776646689851e+09
+# HELP swift_cluster_accounts_replication_duration Account replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_replication_duration gauge
+swift_cluster_accounts_replication_duration{storage_ip="10.0.0.1"} 13.002140045166016
+swift_cluster_accounts_replication_duration{storage_ip="10.0.0.2"} 12.217212915420532
+# HELP swift_cluster_containers_quarantined Quarantined containers reported by the swift-recon tool.
+# TYPE swift_cluster_containers_quarantined gauge
+swift_cluster_containers_quarantined{storage_ip="10.0.0.1"} 0
+swift_cluster_containers_quarantined{storage_ip="10.0.0.2"} 0
+# HELP swift_cluster_containers_replication_age Container replication age reported by the swift-recon tool.
+# TYPE swift_cluster_containers_replication_age gauge
+swift_cluster_containers_replication_age{storage_ip="10.0.0.1"} 1.577664528691438e+09
+swift_cluster_containers_replication_age{storage_ip="10.0.0.2"} 1.577664555743305e+09
+# HELP swift_cluster_containers_replication_duration Container replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_containers_replication_duration gauge
+swift_cluster_containers_replication_duration{storage_ip="10.0.0.1"} 83.79213690757751
+swift_cluster_containers_replication_duration{storage_ip="10.0.0.2"} 86.18623805046082
+# HELP swift_cluster_containers_updater_sweep_time Container updater sweep time reported by the swift-recon tool.
+# TYPE swift_cluster_containers_updater_sweep_time gauge
+swift_cluster_containers_updater_sweep_time{storage_ip="10.0.0.1"} 52.1986780166626
+swift_cluster_containers_updater_sweep_time{storage_ip="10.0.0.2"} 71.28152513504028
+# HELP swift_cluster_drives_audit_errors Drive audit errors reported by the swift-recon tool.
+# TYPE swift_cluster_drives_audit_errors gauge
+swift_cluster_drives_audit_errors{storage_ip="10.0.0.1"} 0
+swift_cluster_drives_audit_errors{storage_ip="10.0.0.2"} 1
+# HELP swift_cluster_drives_unmounted Unmounted drives reported by the swift-recon tool.
+# TYPE swift_cluster_drives_unmounted gauge
+swift_cluster_drives_unmounted{storage_ip="10.0.0.1"} 0
+swift_cluster_drives_unmounted{storage_ip="10.0.0.2"} 1
+# HELP swift_cluster_md5_ring_all Sum of matched-, not matched hosts, and errors encountered while check hosts for ring md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_ring_all gauge
+swift_cluster_md5_ring_all 2
+# HELP swift_cluster_md5_ring_errors Errors encountered while checking hosts for ring md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_ring_errors gauge
+swift_cluster_md5_ring_errors 0
+# HELP swift_cluster_md5_ring_matched Matched hosts for ring md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_ring_matched gauge
+swift_cluster_md5_ring_matched 2
+# HELP swift_cluster_md5_ring_not_matched Not matched hosts for ring md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_ring_not_matched gauge
+swift_cluster_md5_ring_not_matched 0
+# HELP swift_cluster_md5_swiftconf_all Sum of matched-, not matched hosts, and errors encountered while check hosts for swiftconf md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_swiftconf_all gauge
+swift_cluster_md5_swiftconf_all 2
+# HELP swift_cluster_md5_swiftconf_errors Errors encountered while checking hosts for swiftconf md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_swiftconf_errors gauge
+swift_cluster_md5_swiftconf_errors 0
+# HELP swift_cluster_md5_swiftconf_matched Matched hosts for swiftconf md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_swiftconf_matched gauge
+swift_cluster_md5_swiftconf_matched 2
+# HELP swift_cluster_md5_swiftconf_not_matched Not matched hosts for swiftconf md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_swiftconf_not_matched gauge
+swift_cluster_md5_swiftconf_not_matched 0
+# HELP swift_cluster_objects_quarantined Quarantined objects reported by the swift-recon tool.
+# TYPE swift_cluster_objects_quarantined gauge
+swift_cluster_objects_quarantined{storage_ip="10.0.0.1"} 0
+swift_cluster_objects_quarantined{storage_ip="10.0.0.2"} 0
+# HELP swift_cluster_objects_replication_age Object replication age reported by the swift-recon tool.
+# TYPE swift_cluster_objects_replication_age gauge
+swift_cluster_objects_replication_age{storage_ip="10.0.0.1"} 1.577664310620143e+09
+swift_cluster_objects_replication_age{storage_ip="10.0.0.2"} 1.577664316719913e+09
+# HELP swift_cluster_objects_replication_duration Object replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_objects_replication_duration gauge
+swift_cluster_objects_replication_duration{storage_ip="10.0.0.1"} 4.6007425824801125
+swift_cluster_objects_replication_duration{storage_ip="10.0.0.2"} 4.947240881125132
+# HELP swift_cluster_objects_updater_sweep_time Object updater sweep time reported by the swift-recon tool.
+# TYPE swift_cluster_objects_updater_sweep_time gauge
+swift_cluster_objects_updater_sweep_time{storage_ip="10.0.0.1"} 0.44452810287475586
+swift_cluster_objects_updater_sweep_time{storage_ip="10.0.0.2"} 4.389769792556763
+# HELP swift_cluster_storage_capacity_bytes Capacity storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_capacity_bytes gauge
+swift_cluster_storage_capacity_bytes{storage_ip="10.0.0.1"} 8.3986504433664e+13
+swift_cluster_storage_capacity_bytes{storage_ip="10.0.0.2"} 8.3986504433664e+13
+# HELP swift_cluster_storage_free_bytes Free storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_free_bytes gauge
+swift_cluster_storage_free_bytes{storage_ip="10.0.0.1"} 7.8768823226368e+13
+swift_cluster_storage_free_bytes{storage_ip="10.0.0.2"} 7.8783182286848e+13
+# HELP swift_cluster_storage_used_bytes Used storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_bytes gauge
+swift_cluster_storage_used_bytes{storage_ip="10.0.0.1"} 5.217681207296e+12
+swift_cluster_storage_used_bytes{storage_ip="10.0.0.2"} 5.203322146816e+12
+# HELP swift_cluster_storage_used_percent Percentage of storage used as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_percent gauge
+swift_cluster_storage_used_percent{storage_ip="10.0.0.1"} 0.06212523360127625
+swift_cluster_storage_used_percent{storage_ip="10.0.0.2"} 0.06195426493700304
+# HELP swift_cluster_storage_used_percent_by_disk Percentage of storage used by a disk as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_percent_by_disk gauge
+swift_cluster_storage_used_percent_by_disk{disk="sdb01",storage_ip="10.0.0.1"} 0.06323726985355019
+swift_cluster_storage_used_percent_by_disk{disk="sdb01",storage_ip="10.0.0.2"} 0.05993283299508797
+swift_cluster_storage_used_percent_by_disk{disk="sdb02",storage_ip="10.0.0.1"} 0.062045663965689404
+swift_cluster_storage_used_percent_by_disk{disk="sdb02",storage_ip="10.0.0.2"} 0.06662322816137108
+swift_cluster_storage_used_percent_by_disk{disk="sdb03",storage_ip="10.0.0.1"} 0.06061104772875378
+swift_cluster_storage_used_percent_by_disk{disk="sdb03",storage_ip="10.0.0.2"} 0.06297426781258007
+swift_cluster_storage_used_percent_by_disk{disk="sdb04",storage_ip="10.0.0.1"} 0.06202856041780768
+swift_cluster_storage_used_percent_by_disk{disk="sdb04",storage_ip="10.0.0.2"} 0.062449185478729255
+swift_cluster_storage_used_percent_by_disk{disk="sdb05",storage_ip="10.0.0.1"} 0.06318589093226876
+swift_cluster_storage_used_percent_by_disk{disk="sdb05",storage_ip="10.0.0.2"} 0.061085867480675925
+swift_cluster_storage_used_percent_by_disk{disk="sdb06",storage_ip="10.0.0.1"} 0.061926503786569144
+swift_cluster_storage_used_percent_by_disk{disk="sdb06",storage_ip="10.0.0.2"} 0.06398650083946056
+swift_cluster_storage_used_percent_by_disk{disk="sdb07",storage_ip="10.0.0.1"} 0.0645056437017336
+swift_cluster_storage_used_percent_by_disk{disk="sdb07",storage_ip="10.0.0.2"} 0.061458179286183884
+swift_cluster_storage_used_percent_by_disk{disk="sdb08",storage_ip="10.0.0.1"} 0.05986312630790677
+swift_cluster_storage_used_percent_by_disk{disk="sdb08",storage_ip="10.0.0.2"} 0.060058647512637585
+swift_cluster_storage_used_percent_by_disk{disk="sdb09",storage_ip="10.0.0.1"} 0.06428164867435562
+swift_cluster_storage_used_percent_by_disk{disk="sdb09",storage_ip="10.0.0.2"} 0.058832530010755654
+swift_cluster_storage_used_percent_by_disk{disk="sdb10",storage_ip="10.0.0.1"} 0.0621769857573793
+swift_cluster_storage_used_percent_by_disk{disk="sdb10",storage_ip="10.0.0.2"} 0.06169743231693564
+swift_cluster_storage_used_percent_by_disk{disk="sdb11",storage_ip="10.0.0.1"} 0.06173608770070107
+swift_cluster_storage_used_percent_by_disk{disk="sdb11",storage_ip="10.0.0.2"} 0.05970043435623979
+swift_cluster_storage_used_percent_by_disk{disk="sdb12",storage_ip="10.0.0.1"} 0.06385946073834019
+swift_cluster_storage_used_percent_by_disk{disk="sdb12",storage_ip="10.0.0.2"} 0.060605842241765746
+swift_cluster_storage_used_percent_by_disk{disk="sdb13",storage_ip="10.0.0.1"} 0.06125674660370616
+swift_cluster_storage_used_percent_by_disk{disk="sdb13",storage_ip="10.0.0.2"} 0.06277274773472794
+swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.1"} 0.0590386342491059
+swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.2"} 0.06518201289089147

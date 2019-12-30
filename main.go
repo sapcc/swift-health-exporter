@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -28,9 +29,12 @@ import (
 )
 
 func main() {
-	swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT", "swift-dispersion-report")
+	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+	swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+	swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 
 	prometheus.MustRegister(collectors.NewDispersionCollector(swiftDispersionReportPath))
+	prometheus.MustRegister(collectors.NewReconCollector(swiftReconPath))
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
@@ -45,9 +49,13 @@ func main() {
 }
 
 // getExecutablePath gets the path to an executable from the environment
-// variable using the envKey (if defined).
-// Otherwise it attempts to find the path in the directories defined in the
-// "PATH" environment variable.
+// variable using the envKey (if defined). Otherwise it attempts to find this
+// path in the directories named by the "PATH" environment variable.
+//
+// exec.Command() alreadys uses LookPath() in case an executable name is
+// provided instead of a path, but we do this manually for two reasons:
+// 1. To terminate the program early in case the executable path could not be found.
+// 2. To save multiple LookPath() calls for the same executable.
 func getExecutablePath(envKey, fileName string) string {
 	val := os.Getenv(envKey)
 	if val != "" {
@@ -56,8 +64,9 @@ func getExecutablePath(envKey, fileName string) string {
 
 	path, err := exec.LookPath(fileName)
 	if err != nil {
-		logg.Fatal("could not find an executable named %q in the directories named by the PATH environment variable", fileName)
+		logg.Fatal(err.Error())
 	}
+
 	return path
 }
 

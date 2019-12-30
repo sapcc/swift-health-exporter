@@ -24,9 +24,9 @@ var reportData = []byte(
 	`{"object": {"retries": 0, "missing_0": 655, "copies_expected": 1965, "pct_found": 100.0, "overlapping": 0, "copies_found": 1965}, "container": {"retries": 0, "copies_expected": 120, "pct_found": 100.0, "overlapping": 0, "copies_found": 120}}`)
 
 func main() {
-	verbose := kingpin.Flag("dump-json", "Dump dispersion report in json format.").Short('j').Required().Bool()
+	dumpJSONFlag := kingpin.Flag("dump-json", "Dump dispersion report in json format.").Short('j').Required().Bool()
 	kingpin.Parse()
-	if *verbose {
+	if *dumpJSONFlag {
 		os.Stdout.Write(reportData)
 	}
 }

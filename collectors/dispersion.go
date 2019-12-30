@@ -43,6 +43,7 @@ var (
 		"Expected container copies reported by the swift-dispersion-report tool.",
 		nil, nil,
 	)
+
 	dispersionObjCopiesExpectedDesc = prometheus.NewDesc(
 		"swift_dispersion_object_copies_expected",
 		"Expected object copies reported by the swift-dispersion-report tool.",
@@ -65,12 +66,12 @@ var (
 	)
 )
 
-// DispersionCollector TODO
+// DispersionCollector implements the prometheus.Collector interface.
 type DispersionCollector struct {
 	PathToExecutable string
 }
 
-// NewDispersionCollector TODO
+// NewDispersionCollector creates a new DispersionCollector.
 func NewDispersionCollector(pathToExecutable string) *DispersionCollector {
 	return &DispersionCollector{
 		PathToExecutable: pathToExecutable,
