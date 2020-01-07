@@ -34,30 +34,22 @@ swift_cluster_drives_audit_errors{storage_ip="10.0.0.2"} 1
 # TYPE swift_cluster_drives_unmounted gauge
 swift_cluster_drives_unmounted{storage_ip="10.0.0.1"} 0
 swift_cluster_drives_unmounted{storage_ip="10.0.0.2"} 1
-# HELP swift_cluster_md5_ring_all Sum of matched-, not matched hosts, and errors encountered while check hosts for ring md5sum(s) as reported by the swift-recon tool.
-# TYPE swift_cluster_md5_ring_all gauge
-swift_cluster_md5_ring_all 2
-# HELP swift_cluster_md5_ring_errors Errors encountered while checking hosts for ring md5sum(s) as reported by the swift-recon tool.
-# TYPE swift_cluster_md5_ring_errors gauge
-swift_cluster_md5_ring_errors 0
-# HELP swift_cluster_md5_ring_matched Matched hosts for ring md5sum(s) reported by the swift-recon tool.
-# TYPE swift_cluster_md5_ring_matched gauge
-swift_cluster_md5_ring_matched 2
-# HELP swift_cluster_md5_ring_not_matched Not matched hosts for ring md5sum(s) reported by the swift-recon tool.
-# TYPE swift_cluster_md5_ring_not_matched gauge
-swift_cluster_md5_ring_not_matched 0
-# HELP swift_cluster_md5_swiftconf_all Sum of matched-, not matched hosts, and errors encountered while check hosts for swiftconf md5sum(s) as reported by the swift-recon tool.
-# TYPE swift_cluster_md5_swiftconf_all gauge
-swift_cluster_md5_swiftconf_all 2
-# HELP swift_cluster_md5_swiftconf_errors Errors encountered while checking hosts for swiftconf md5sum(s) as reported by the swift-recon tool.
-# TYPE swift_cluster_md5_swiftconf_errors gauge
-swift_cluster_md5_swiftconf_errors 0
-# HELP swift_cluster_md5_swiftconf_matched Matched hosts for swiftconf md5sum(s) reported by the swift-recon tool.
-# TYPE swift_cluster_md5_swiftconf_matched gauge
-swift_cluster_md5_swiftconf_matched 2
-# HELP swift_cluster_md5_swiftconf_not_matched Not matched hosts for swiftconf md5sum(s) reported by the swift-recon tool.
-# TYPE swift_cluster_md5_swiftconf_not_matched gauge
-swift_cluster_md5_swiftconf_not_matched 0
+# HELP swift_cluster_md5_all Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_all gauge
+swift_cluster_md5_all{kind="ring"} 2
+swift_cluster_md5_all{kind="swiftconf"} 2
+# HELP swift_cluster_md5_errors Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_errors gauge
+swift_cluster_md5_errors{kind="ring"} 0
+swift_cluster_md5_errors{kind="swiftconf"} 0
+# HELP swift_cluster_md5_matched Matched hosts for md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_matched gauge
+swift_cluster_md5_matched{kind="ring"} 2
+swift_cluster_md5_matched{kind="swiftconf"} 2
+# HELP swift_cluster_md5_not_matched Not matched hosts for md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_not_matched gauge
+swift_cluster_md5_not_matched{kind="ring"} 0
+swift_cluster_md5_not_matched{kind="swiftconf"} 0
 # HELP swift_cluster_objects_quarantined Quarantined objects reported by the swift-recon tool.
 # TYPE swift_cluster_objects_quarantined gauge
 swift_cluster_objects_quarantined{storage_ip="10.0.0.1"} 0

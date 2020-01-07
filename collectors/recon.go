@@ -166,6 +166,29 @@ func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- promet
 	}
 }
 
+var (
+	clusterMD5AllDesc = prometheus.NewDesc(
+		"swift_cluster_md5_all",
+		"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.",
+		[]string{"kind"}, nil,
+	)
+	clusterMD5MatchedDesc = prometheus.NewDesc(
+		"swift_cluster_md5_matched",
+		"Matched hosts for md5sum(s) reported by the swift-recon tool.",
+		[]string{"kind"}, nil,
+	)
+	clusterMD5NotMatchedDesc = prometheus.NewDesc(
+		"swift_cluster_md5_not_matched",
+		"Not matched hosts for md5sum(s) reported by the swift-recon tool.",
+		[]string{"kind"}, nil,
+	)
+	clusterMD5ErrorsDesc = prometheus.NewDesc(
+		"swift_cluster_md5_errors",
+		"Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.",
+		[]string{"kind"}, nil,
+	)
+)
+
 var reconMD5Rx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sum(?:s)?\s*([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`)
 
@@ -202,44 +225,25 @@ func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.M
 			continue
 		}
 
-		allDesc := prometheus.NewDesc(
-			fmt.Sprintf("swift_cluster_md5_%s_all", kind),
-			fmt.Sprintf("Sum of matched-, not matched hosts, and errors encountered while check hosts for %s md5sum(s) as reported by the swift-recon tool.", kind),
-			nil, nil,
-		)
 		ch <- prometheus.MustNewConstMetric(
-			allDesc,
+			clusterMD5AllDesc,
 			prometheus.GaugeValue, matchedHosts+notMatchedHosts+errsEncountered,
-		)
-
-		matchedDesc := prometheus.NewDesc(
-			fmt.Sprintf("swift_cluster_md5_%s_matched", kind),
-			fmt.Sprintf("Matched hosts for %s md5sum(s) reported by the swift-recon tool.", kind),
-			nil, nil,
+			kind,
 		)
 		ch <- prometheus.MustNewConstMetric(
-			matchedDesc,
+			clusterMD5MatchedDesc,
 			prometheus.GaugeValue, matchedHosts,
-		)
-
-		notMatchedDesc := prometheus.NewDesc(
-			fmt.Sprintf("swift_cluster_md5_%s_not_matched", kind),
-			fmt.Sprintf("Not matched hosts for %s md5sum(s) reported by the swift-recon tool.", kind),
-			nil, nil,
+			kind,
 		)
 		ch <- prometheus.MustNewConstMetric(
-			notMatchedDesc,
+			clusterMD5NotMatchedDesc,
 			prometheus.GaugeValue, notMatchedHosts,
-		)
-
-		errorsDesc := prometheus.NewDesc(
-			fmt.Sprintf("swift_cluster_md5_%s_errors", kind),
-			fmt.Sprintf("Errors encountered while checking hosts for %s md5sum(s) as reported by the swift-recon tool.", kind),
-			nil, nil,
+			kind,
 		)
 		ch <- prometheus.MustNewConstMetric(
-			errorsDesc,
+			clusterMD5ErrorsDesc,
 			prometheus.GaugeValue, errsEncountered,
+			kind,
 		)
 	}
 }

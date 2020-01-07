@@ -79,10 +79,10 @@ for `swift-health-exporter`.
 | `swift_cluster_containers_updater_sweep_time`   | `storage_ip`         |
 | `swift_cluster_drives_audit_errors`             | `storage_ip`         |
 | `swift_cluster_drives_unmounted`                | `storage_ip`         |
-| `swift_cluster_md5_${kind}_all`                 |                      |
-| `swift_cluster_md5_${kind}_errors`              |                      |
-| `swift_cluster_md5_${kind}_matched`             |                      |
-| `swift_cluster_md5_${kind}_not_matched`         |                      |
+| `swift_cluster_md5_all`                         | `kind`               |
+| `swift_cluster_md5_errors`                      | `kind`               |
+| `swift_cluster_md5_matched`                     | `kind`               |
+| `swift_cluster_md5_not_matched`                 | `kind`               |
 | `swift_cluster_objects_quarantined`             | `storage_ip`         |
 | `swift_cluster_objects_replication_age`         | `storage_ip`         |
 | `swift_cluster_objects_replication_duration`    | `storage_ip`         |
