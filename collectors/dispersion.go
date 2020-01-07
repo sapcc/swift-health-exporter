@@ -64,6 +64,12 @@ var (
 		"Expected object copies reported by the swift-dispersion-report tool.",
 		nil, nil,
 	)
+
+	dispersionTaskErrorDesc = prometheus.NewDesc(
+		"swift_dispersion_exit_code",
+		"The exit code for a Swift Dispersion Report query execution.",
+		[]string{"query"}, nil,
+	)
 )
 
 // DispersionCollector implements the prometheus.Collector interface.
@@ -85,6 +91,17 @@ func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements the prometheus.Collector interface.
 func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
+	errCount := 0
+	query := "--dump-json"
+	sendErrorCount := func() {
+		ch <- prometheus.MustNewConstMetric(
+			dispersionTaskErrorDesc,
+			prometheus.CounterValue, float64(errCount),
+			query,
+		)
+	}
+	sendErrorCount()
+
 	var dispersionReport struct {
 		Object struct {
 			Expected    int64 `json:"copies_expected"`
@@ -100,14 +117,18 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 		} `json:"container"`
 	}
 
-	out, err := exec.Command(c.pathToExecutable, "-j").Output()
+	out, err := exec.Command(c.pathToExecutable, query).Output()
 	if err != nil {
 		logg.Error("swift-dispersion-report: %v", err)
+		errCount++
+		sendErrorCount()
 		return
 	}
 	err = json.Unmarshal(out, &dispersionReport)
 	if err != nil {
 		logg.Error("swift-dispersion-report: %v", err)
+		errCount++
+		sendErrorCount()
 		return
 	}
 

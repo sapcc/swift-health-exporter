@@ -28,6 +28,23 @@ import (
 	"github.com/sapcc/go-bits/logg"
 )
 
+var (
+	reconTaskErrorDesc = prometheus.NewDesc(
+		"swift_recon_exit_code",
+		"The exit code for a Swift Recon query execution.",
+		[]string{"query"}, nil,
+	)
+
+	sendReconErrorCount = func(ch chan<- prometheus.Metric, cmdArgs []string, count int) {
+		query := strings.Join(cmdArgs, " ")
+		ch <- prometheus.MustNewConstMetric(
+			reconTaskErrorDesc,
+			prometheus.CounterValue, float64(count),
+			query,
+		)
+	}
+)
+
 // ReconCollector implements the prometheus.Collector interface.
 type ReconCollector struct {
 	pathToExecutable string
@@ -99,12 +116,19 @@ var (
 var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
 
 func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, "--diskusage")
+	errCount := 0
+	cmdArgs := []string{"--diskusage", "--verbose"}
+	sendReconErrorCount(ch, cmdArgs, errCount)
+
+	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
+	gotErr := false
 	for hostname, dataBytes := range result {
 		var disksData []struct {
 			Device  string `json:"device"`
@@ -116,6 +140,7 @@ func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- promet
 		err = json.Unmarshal(dataBytes, &disksData)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
+			gotErr = true
 			continue
 		}
 
@@ -164,6 +189,10 @@ func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- promet
 			hostname,
 		)
 	}
+	if gotErr {
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
+	}
 }
 
 var (
@@ -193,35 +222,47 @@ var reconMD5Rx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sum(?:s)?\s*([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`)
 
 func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	cmd := exec.Command(pathToReconExecutable, "--md5")
+	errCount := 0
+	cmdArgs := []string{"--md5"}
+	sendReconErrorCount(ch, cmdArgs, errCount)
+
+	cmd := exec.Command(pathToReconExecutable, cmdArgs...)
 	out, err := cmd.Output()
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
 	matchList := reconMD5Rx.FindAllSubmatch(out, -1)
 	if len(matchList) == 0 {
 		logg.Error("recon collector: %s: command %q did not return any usable output", taskName, cmd)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
+	gotErr := false
 	for _, match := range matchList {
 		kind := strings.ReplaceAll(string(match[1]), ".", "")
 		matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
 		if err != nil {
 			logg.Error("recon collector: %s: %v", taskName, err)
+			gotErr = true
 			continue
 		}
 		totalHosts, err := strconv.ParseFloat(string(match[3]), 64)
 		if err != nil {
 			logg.Error("recon collector: %s: %v", taskName, err)
+			gotErr = true
 			continue
 		}
 		notMatchedHosts := totalHosts - matchedHosts
 		errsEncountered, err := strconv.ParseFloat(string(match[4]), 64)
 		if err != nil {
 			logg.Error("recon collector: %s: %v", taskName, err)
+			gotErr = true
 			continue
 		}
 
@@ -246,6 +287,10 @@ func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.M
 			kind,
 		)
 	}
+	if gotErr {
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
+	}
 }
 
 var (
@@ -264,12 +309,19 @@ var (
 func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	serverTypes := []string{"container", "object"}
 	for _, server := range serverTypes {
-		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, server, "--updater")
+		errCount := 0
+		cmdArgs := []string{server, "--updater", "--verbose"}
+		sendReconErrorCount(ch, cmdArgs, errCount)
+
+		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
+			errCount++
+			sendReconErrorCount(ch, cmdArgs, errCount)
 			return
 		}
 
+		gotErr := false
 		for hostname, dataBytes := range result {
 			var data struct {
 				ContainerUpdaterSweepTime float64 `json:"container_updater_sweep"`
@@ -278,6 +330,7 @@ func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- pro
 			err := json.Unmarshal(dataBytes, &data)
 			if err != nil {
 				logg.Error("recon collector: %s: %s: %s: %v", taskName, server, hostname, err)
+				gotErr = true
 				continue
 			}
 
@@ -293,6 +346,10 @@ func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- pro
 				prometheus.GaugeValue, val,
 				hostname,
 			)
+		}
+		if gotErr {
+			errCount++
+			sendReconErrorCount(ch, cmdArgs, errCount)
 		}
 	}
 }
@@ -348,12 +405,19 @@ func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prom
 			durDesc = clusterObjReplDurDesc
 		}
 
-		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, server, "--replication")
+		errCount := 0
+		cmdArgs := []string{server, "--replication", "--verbose"}
+		sendReconErrorCount(ch, cmdArgs, errCount)
+
+		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
+			errCount++
+			sendReconErrorCount(ch, cmdArgs, errCount)
 			return
 		}
 
+		gotErr := false
 		for hostname, dataBytes := range result {
 			var data struct {
 				ReplicationLast float64 `json:"replication_last"`
@@ -362,6 +426,7 @@ func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prom
 			err := json.Unmarshal(dataBytes, &data)
 			if err != nil {
 				logg.Error("recon collector: %s: %s: %s: %v", taskName, server, hostname, err)
+				gotErr = true
 				continue
 			}
 
@@ -375,6 +440,10 @@ func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prom
 				prometheus.GaugeValue, data.ReplicationTime,
 				hostname,
 			)
+		}
+		if gotErr {
+			errCount++
+			sendReconErrorCount(ch, cmdArgs, errCount)
 		}
 	}
 }
@@ -398,12 +467,19 @@ var (
 )
 
 func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, "--quarantined")
+	errCount := 0
+	cmdArgs := []string{"--quarantined", "--verbose"}
+	sendReconErrorCount(ch, cmdArgs, errCount)
+
+	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
+	gotErr := false
 	for hostname, dataBytes := range result {
 		var data struct {
 			Objects    int64 `json:"objects"`
@@ -413,6 +489,7 @@ func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prom
 		err := json.Unmarshal(dataBytes, &data)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
+			gotErr = true
 			continue
 		}
 
@@ -432,6 +509,10 @@ func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prom
 			hostname,
 		)
 	}
+	if gotErr {
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
+	}
 }
 
 var clusterDrivesUnmountedDesc = prometheus.NewDesc(
@@ -441,12 +522,19 @@ var clusterDrivesUnmountedDesc = prometheus.NewDesc(
 )
 
 func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, "--unmounted")
+	errCount := 0
+	cmdArgs := []string{"--unmounted", "--verbose"}
+	sendReconErrorCount(ch, cmdArgs, errCount)
+
+	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
+	gotErr := false
 	for hostname, dataBytes := range result {
 		var disksData []struct {
 			Device string `json:"device"`
@@ -454,6 +542,7 @@ func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- promet
 		err := json.Unmarshal(dataBytes, &disksData)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
+			gotErr = true
 			continue
 		}
 
@@ -462,6 +551,10 @@ func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- promet
 			prometheus.GaugeValue, float64(len(disksData)),
 			hostname,
 		)
+	}
+	if gotErr {
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -472,12 +565,19 @@ var clusterDrivesAuditErrsDesc = prometheus.NewDesc(
 )
 
 func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, "--driveaudit")
+	errCount := 0
+	cmdArgs := []string{"--driveaudit", "--verbose"}
+	sendReconErrorCount(ch, cmdArgs, errCount)
+
+	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
+	gotErr := false
 	for hostname, dataBytes := range result {
 		var data struct {
 			DriveAuditErrors int64 `json:"drive_audit_errors"`
@@ -494,6 +594,10 @@ func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prome
 			hostname,
 		)
 	}
+	if gotErr {
+		errCount++
+		sendReconErrorCount(ch, cmdArgs, errCount)
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -502,8 +606,7 @@ func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prome
 var reconHostOutputRx = regexp.MustCompile(`(?m)^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
 
 func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	args := append(cmdArgs, "--verbose")
-	cmd := exec.Command(pathToExecutable, args...)
+	cmd := exec.Command(pathToExecutable, cmdArgs...)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, err
