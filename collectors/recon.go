@@ -163,13 +163,13 @@ func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- promet
 			)
 		}
 
-		usedPercent := float64(totalUsed) / float64(totalSize)
+		usedRatio := float64(totalUsed) / float64(totalSize)
 		if totalSize == 0 {
-			usedPercent = 1.0
+			usedRatio = 1.0
 		}
 		ch <- prometheus.MustNewConstMetric(
 			clusterStorageUsedPercentDesc,
-			prometheus.GaugeValue, usedPercent,
+			prometheus.GaugeValue, usedRatio,
 			hostname,
 		)
 		ch <- prometheus.MustNewConstMetric(
