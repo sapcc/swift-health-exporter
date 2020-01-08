@@ -118,13 +118,12 @@ var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
 func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	errCount := 0
 	cmdArgs := []string{"--diskusage", "--verbose"}
-	sendReconErrorCount(ch, cmdArgs, errCount)
+	defer sendReconErrorCount(ch, cmdArgs, errCount)
 
 	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -191,7 +190,6 @@ func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- promet
 	}
 	if gotErr {
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -224,14 +222,13 @@ var reconMD5Rx = regexp.MustCompile(
 func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	errCount := 0
 	cmdArgs := []string{"--md5"}
-	sendReconErrorCount(ch, cmdArgs, errCount)
+	defer sendReconErrorCount(ch, cmdArgs, errCount)
 
 	cmd := exec.Command(pathToReconExecutable, cmdArgs...)
 	out, err := cmd.Output()
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -239,7 +236,6 @@ func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.M
 	if len(matchList) == 0 {
 		logg.Error("recon collector: %s: command %q did not return any usable output", taskName, cmd)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -289,7 +285,6 @@ func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.M
 	}
 	if gotErr {
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -311,13 +306,11 @@ func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- pro
 	for _, server := range serverTypes {
 		errCount := 0
 		cmdArgs := []string{server, "--updater", "--verbose"}
-		sendReconErrorCount(ch, cmdArgs, errCount)
 
 		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
 			errCount++
-			sendReconErrorCount(ch, cmdArgs, errCount)
 			return
 		}
 
@@ -349,8 +342,9 @@ func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- pro
 		}
 		if gotErr {
 			errCount++
-			sendReconErrorCount(ch, cmdArgs, errCount)
 		}
+
+		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -392,6 +386,9 @@ var (
 func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	serverTypes := []string{"account", "container", "object"}
 	for _, server := range serverTypes {
+		errCount := 0
+		cmdArgs := []string{server, "--replication", "--verbose"}
+
 		var ageDesc, durDesc *prometheus.Desc
 		switch server {
 		case "account":
@@ -405,15 +402,10 @@ func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prom
 			durDesc = clusterObjReplDurDesc
 		}
 
-		errCount := 0
-		cmdArgs := []string{server, "--replication", "--verbose"}
-		sendReconErrorCount(ch, cmdArgs, errCount)
-
 		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 		if err != nil {
 			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
 			errCount++
-			sendReconErrorCount(ch, cmdArgs, errCount)
 			return
 		}
 
@@ -443,8 +435,9 @@ func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prom
 		}
 		if gotErr {
 			errCount++
-			sendReconErrorCount(ch, cmdArgs, errCount)
 		}
+
+		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -469,13 +462,12 @@ var (
 func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	errCount := 0
 	cmdArgs := []string{"--quarantined", "--verbose"}
-	sendReconErrorCount(ch, cmdArgs, errCount)
+	defer sendReconErrorCount(ch, cmdArgs, errCount)
 
 	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -511,7 +503,6 @@ func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prom
 	}
 	if gotErr {
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -524,13 +515,12 @@ var clusterDrivesUnmountedDesc = prometheus.NewDesc(
 func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	errCount := 0
 	cmdArgs := []string{"--unmounted", "--verbose"}
-	sendReconErrorCount(ch, cmdArgs, errCount)
+	defer sendReconErrorCount(ch, cmdArgs, errCount)
 
 	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -554,7 +544,6 @@ func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- promet
 	}
 	if gotErr {
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 
@@ -567,13 +556,12 @@ var clusterDrivesAuditErrsDesc = prometheus.NewDesc(
 func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
 	errCount := 0
 	cmdArgs := []string{"--driveaudit", "--verbose"}
-	sendReconErrorCount(ch, cmdArgs, errCount)
+	defer sendReconErrorCount(ch, cmdArgs, errCount)
 
 	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
 	if err != nil {
 		logg.Error("recon collector: %s: %v", taskName, err)
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 		return
 	}
 
@@ -596,7 +584,6 @@ func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prome
 	}
 	if gotErr {
 		errCount++
-		sendReconErrorCount(ch, cmdArgs, errCount)
 	}
 }
 

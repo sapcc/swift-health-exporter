@@ -93,14 +93,13 @@ func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 	errCount := 0
 	query := "--dump-json"
-	sendErrorCount := func() {
+	defer func() {
 		ch <- prometheus.MustNewConstMetric(
 			dispersionTaskErrorDesc,
 			prometheus.CounterValue, float64(errCount),
 			query,
 		)
-	}
-	sendErrorCount()
+	}()
 
 	var dispersionReport struct {
 		Object struct {
@@ -121,14 +120,12 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		logg.Error("swift-dispersion-report: %v", err)
 		errCount++
-		sendErrorCount()
 		return
 	}
 	err = json.Unmarshal(out, &dispersionReport)
 	if err != nil {
 		logg.Error("swift-dispersion-report: %v", err)
 		errCount++
-		sendErrorCount()
 		return
 	}
 
