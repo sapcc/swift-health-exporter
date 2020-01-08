@@ -69,7 +69,36 @@ func NewReconCollector(pathToExecutable string) *ReconCollector {
 
 // Describe implements the prometheus.Collector interface.
 func (c *ReconCollector) Describe(ch chan<- *prometheus.Desc) {
-	prometheus.DescribeByCollect(c, ch)
+	ch <- reconTaskErrorDesc
+
+	ch <- clusterStorageUsedPercentByDiskDesc
+	ch <- clusterStorageUsedPercentDesc
+	ch <- clusterStorageUsedBytesDesc
+	ch <- clusterStorageFreeBytesDesc
+	ch <- clusterStorageCapacityBytesDesc
+
+	ch <- clusterMD5AllDesc
+	ch <- clusterMD5MatchedDesc
+	ch <- clusterMD5NotMatchedDesc
+	ch <- clusterMD5ErrorsDesc
+
+	ch <- clusterCntrUpdaterSweepTimeDesc
+	ch <- clusterObjUpdaterSweepTimeDesc
+
+	ch <- clusterAccReplAgeDesc
+	ch <- clusterAccReplDurDesc
+	ch <- clusterCntrReplAgeDesc
+	ch <- clusterCntrReplDurDesc
+	ch <- clusterObjReplAgeDesc
+	ch <- clusterObjReplDurDesc
+
+	ch <- clusterAccQuarantinedDesc
+	ch <- clusterCntrQuarantinedDesc
+	ch <- clusterObjQuarantinedDesc
+
+	ch <- clusterDrivesUnmountedDesc
+
+	ch <- clusterDrivesAuditErrsDesc
 }
 
 // Collect implements the prometheus.Collector interface.

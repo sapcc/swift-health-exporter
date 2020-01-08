@@ -86,7 +86,17 @@ func NewDispersionCollector(pathToExecutable string) *DispersionCollector {
 
 // Describe implements the prometheus.Collector interface.
 func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
-	prometheus.DescribeByCollect(c, ch)
+	ch <- dispersionCntrCopiesExpectedDesc
+	ch <- dispersionCntrCopiesFoundDesc
+	ch <- dispersionCntrCopiesMissingDesc
+	ch <- dispersionCntrOverlappingDesc
+
+	ch <- dispersionObjCopiesExpectedDesc
+	ch <- dispersionObjCopiesFoundDesc
+	ch <- dispersionObjCopiesMissingDesc
+	ch <- dispersionObjOverlappingDesc
+
+	ch <- dispersionTaskErrorDesc
 }
 
 // Collect implements the prometheus.Collector interface.
