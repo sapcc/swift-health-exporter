@@ -1,0 +1,9 @@
+# build artifacts
+.gopath/pkg/
+build/
+
+# test artifacts
+build/cover.out
+build/*.cover.out
+build/cover.html
+*.actual
