@@ -17,7 +17,7 @@ package collectors
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -28,573 +28,620 @@ import (
 	"github.com/sapcc/go-bits/logg"
 )
 
-var (
-	reconTaskErrorDesc = prometheus.NewDesc(
-		"swift_recon_exit_code",
-		"The exit code for a Swift Recon query execution.",
-		[]string{"query"}, nil,
-	)
-
-	sendReconErrorCount = func(ch chan<- prometheus.Metric, cmdArgs []string, count int) {
-		query := strings.Join(cmdArgs, " ")
-		ch <- prometheus.MustNewConstMetric(
-			reconTaskErrorDesc,
-			prometheus.CounterValue, float64(count),
-			query,
-		)
-	}
-)
-
 // ReconCollector implements the prometheus.Collector interface.
 type ReconCollector struct {
-	pathToExecutable string
-	tasks            map[string]func(string, string, chan<- prometheus.Metric)
+	taskExitCode typedDesc
+	tasks        []collectorTask
 }
 
 // NewReconCollector creates a new ReconCollector.
 func NewReconCollector(pathToExecutable string) *ReconCollector {
 	return &ReconCollector{
-		pathToExecutable: pathToExecutable,
-		tasks: map[string]func(string, string, chan<- prometheus.Metric){
-			"diskUsage":    reconDiskUsageTask,
-			"driveAudit":   reconDriveAuditTask,
-			"md5":          reconMD5Task,
-			"quarantined":  reconQuarantinedTask,
-			"replication":  reconReplicationTask,
-			"unmounted":    reconUnmountedTask,
-			"updaterSweep": reconUpdaterSweepTask,
+		taskExitCode: typedDesc{
+			desc: prometheus.NewDesc("swift_recon_task_exit_code",
+				"The exit code for a Swift Recon query execution.",
+				[]string{"query"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		tasks: []collectorTask{
+			newReconDiskUsageTask(pathToExecutable),
+			newReconDriveAuditTask(pathToExecutable),
+			newReconMD5Task(pathToExecutable),
+			newReconQuarantinedTask(pathToExecutable),
+			newReconReplicationTask(pathToExecutable),
+			newReconUnmountedTask(pathToExecutable),
+			newReconUpdaterSweepTask(pathToExecutable),
 		},
 	}
 }
 
 // Describe implements the prometheus.Collector interface.
 func (c *ReconCollector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- reconTaskErrorDesc
+	c.taskExitCode.describe(ch)
 
-	ch <- clusterStorageUsedPercentByDiskDesc
-	ch <- clusterStorageUsedPercentDesc
-	ch <- clusterStorageUsedBytesDesc
-	ch <- clusterStorageFreeBytesDesc
-	ch <- clusterStorageCapacityBytesDesc
-
-	ch <- clusterMD5AllDesc
-	ch <- clusterMD5MatchedDesc
-	ch <- clusterMD5NotMatchedDesc
-	ch <- clusterMD5ErrorsDesc
-
-	ch <- clusterCntrUpdaterSweepTimeDesc
-	ch <- clusterObjUpdaterSweepTimeDesc
-
-	ch <- clusterAccReplAgeDesc
-	ch <- clusterAccReplDurDesc
-	ch <- clusterCntrReplAgeDesc
-	ch <- clusterCntrReplDurDesc
-	ch <- clusterObjReplAgeDesc
-	ch <- clusterObjReplDurDesc
-
-	ch <- clusterAccQuarantinedDesc
-	ch <- clusterCntrQuarantinedDesc
-	ch <- clusterObjQuarantinedDesc
-
-	ch <- clusterDrivesUnmountedDesc
-
-	ch <- clusterDrivesAuditErrsDesc
+	for _, t := range c.tasks {
+		t.describeMetrics(ch)
+	}
 }
 
 // Collect implements the prometheus.Collector interface.
 func (c *ReconCollector) Collect(ch chan<- prometheus.Metric) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(c.tasks))
-	for name, task := range c.tasks {
-		go func(name string, task func(string, string, chan<- prometheus.Metric)) {
-			task(name, c.pathToExecutable, ch)
+	for _, t := range c.tasks {
+		go func(t collectorTask) {
+			t.collectMetrics(ch, c.taskExitCode)
 			wg.Done()
-		}(name, task)
+		}(t)
 	}
 	wg.Wait()
 }
 
-var (
-	clusterStorageUsedPercentByDiskDesc = prometheus.NewDesc(
-		"swift_cluster_storage_used_percent_by_disk",
-		"Percentage of storage used by a disk as reported by the swift-recon tool.",
-		[]string{"storage_ip", "disk"}, nil,
-	)
-	clusterStorageUsedPercentDesc = prometheus.NewDesc(
-		"swift_cluster_storage_used_percent",
-		"Percentage of storage used as reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterStorageUsedBytesDesc = prometheus.NewDesc(
-		"swift_cluster_storage_used_bytes",
-		"Used storage bytes as reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterStorageFreeBytesDesc = prometheus.NewDesc(
-		"swift_cluster_storage_free_bytes",
-		"Free storage bytes as reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterStorageCapacityBytesDesc = prometheus.NewDesc(
-		"swift_cluster_storage_capacity_bytes",
-		"Capacity storage bytes as reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-)
+///////////////////////////////////////////////////////////////////////////////
+// Recon collector tasks.
 
-var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+// reconDiskUsageTask implements the collector.collectorTask interface.
+type reconDiskUsageTask struct {
+	pathToReconExecutable string
+	specialCharRx         *regexp.Regexp
 
-func reconDiskUsageTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	errCount := 0
-	cmdArgs := []string{"--diskusage", "--verbose"}
-	defer func() {
-		sendReconErrorCount(ch, cmdArgs, errCount)
-	}()
+	capacityBytes         typedDesc
+	freeBytes             typedDesc
+	usedBytes             typedDesc
+	fractionalUsage       typedDesc
+	fractionalUsageByDisk typedDesc
+}
 
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
-	if err != nil {
-		logg.Error("recon collector: %s: %v", taskName, err)
-		errCount++
-		return
+func newReconDiskUsageTask(pathToReconExecutable string) collectorTask {
+	return &reconDiskUsageTask{
+		pathToReconExecutable: pathToReconExecutable,
+		specialCharRx:         regexp.MustCompile(`[^a-zA-Z0-9]+`),
+		capacityBytes: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_storage_capacity_bytes",
+				"Capacity storage bytes as reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		freeBytes: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_storage_free_bytes",
+				"Free storage bytes as reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		usedBytes: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_storage_used_bytes",
+				"Used storage bytes as reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		fractionalUsage: typedDesc{
+			// In order to be consistent with the legacy system, the metric
+			// name uses the word percent instead of fractional.
+			desc: prometheus.NewDesc("swift_cluster_storage_used_percent",
+				"Fractional usage as reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		fractionalUsageByDisk: typedDesc{
+			// In order to be consistent with the legacy system, the metric
+			// name uses the word percent instead of fractional.
+			desc: prometheus.NewDesc("swift_cluster_storage_used_percent_by_disk",
+				"Fractional usage of a disk as reported by the swift-recon tool.",
+				[]string{"storage_ip", "disk"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 	}
+}
 
-	for hostname, dataBytes := range result {
-		var disksData []struct {
-			Device  string `json:"device"`
-			Avail   int64  `json:"avail"`
-			Mounted bool   `json:"mounted"`
-			Used    int64  `json:"used"`
-			Size    int64  `json:"size"`
-		}
-		err = json.Unmarshal(dataBytes, &disksData)
-		if err != nil {
-			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
-			errCount++
-			continue
-		}
+// reconDiskUsageTask implements the collector.collectorTask interface.
+func (t *reconDiskUsageTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.capacityBytes.describe(ch)
+	t.freeBytes.describe(ch)
+	t.usedBytes.describe(ch)
+	t.fractionalUsage.describe(ch)
+	t.fractionalUsageByDisk.describe(ch)
+}
 
-		var totalFree, totalUsed, totalSize int64
-		for _, disk := range disksData {
-			if !(disk.Mounted) {
-				continue
+// reconDiskUsageTask implements the collector.collectorTask interface.
+func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+	exitCode := 0
+	cmdArgs := []string{"--diskusage", "--verbose"}
+	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	if err == nil {
+		for hostname, dataBytes := range outputPerHost {
+			var disksData []struct {
+				Device  string `json:"device"`
+				Avail   int64  `json:"avail"`
+				Mounted bool   `json:"mounted"`
+				Used    int64  `json:"used"`
+				Size    int64  `json:"size"`
+			}
+			err := json.Unmarshal(dataBytes, &disksData)
+			if err != nil {
+				exitCode = 1
+				logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+				continue // to next host
 			}
 
-			totalFree += disk.Avail
-			totalUsed += disk.Used
-			totalSize += disk.Size
+			var totalFree, totalUsed, totalSize int64
+			for _, disk := range disksData {
+				if !(disk.Mounted) {
+					continue // to next disk
+				}
 
-			// submit metrics by disk (only used percent here, which is the
-			// most useful for alerting)
-			device := specialCharRx.ReplaceAllLiteralString(disk.Device, "")
-			ch <- prometheus.MustNewConstMetric(
-				clusterStorageUsedPercentByDiskDesc,
-				prometheus.GaugeValue, float64(disk.Used)/float64(disk.Size),
-				hostname, device,
-			)
-		}
+				totalFree += disk.Avail
+				totalUsed += disk.Used
+				totalSize += disk.Size
 
-		usedRatio := float64(totalUsed) / float64(totalSize)
-		if totalSize == 0 {
-			usedRatio = 1.0
+				// submit metrics by disk (only fractional usage, which is the
+				// most useful for alerting)
+				device := t.specialCharRx.ReplaceAllLiteralString(disk.Device, "")
+				diskUsageRatio := float64(disk.Used) / float64(disk.Size)
+				ch <- t.fractionalUsageByDisk.mustNewConstMetric(diskUsageRatio, hostname, device)
+			}
+
+			usageRatio := float64(totalUsed) / float64(totalSize)
+			if totalSize == 0 {
+				usageRatio = 1.0
+			}
+			ch <- t.fractionalUsage.mustNewConstMetric(usageRatio, hostname)
+			ch <- t.usedBytes.mustNewConstMetric(float64(totalUsed), hostname)
+			ch <- t.freeBytes.mustNewConstMetric(float64(totalFree), hostname)
+			ch <- t.capacityBytes.mustNewConstMetric(float64(totalSize), hostname)
 		}
-		ch <- prometheus.MustNewConstMetric(
-			clusterStorageUsedPercentDesc,
-			prometheus.GaugeValue, usedRatio,
-			hostname,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterStorageUsedBytesDesc,
-			prometheus.GaugeValue, float64(totalUsed),
-			hostname,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterStorageFreeBytesDesc,
-			prometheus.GaugeValue, float64(totalFree),
-			hostname,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterStorageCapacityBytesDesc,
-			prometheus.GaugeValue, float64(totalSize),
-			hostname,
-		)
+	} else {
+		exitCode = 1
+		logg.Error("swift dispersion: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
+	}
+
+	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+}
+
+// reconMD5Task implements the collector.collectorTask interface.
+type reconMD5Task struct {
+	pathToReconExecutable string
+	md5OutputRx           *regexp.Regexp
+
+	all        typedDesc
+	errors     typedDesc
+	matched    typedDesc
+	notMatched typedDesc
+}
+
+func newReconMD5Task(pathToReconExecutable string) collectorTask {
+	return &reconMD5Task{
+		pathToReconExecutable: pathToReconExecutable,
+		md5OutputRx: regexp.MustCompile(
+			`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sum(?:s)?\s*([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`),
+		all: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_md5_all",
+				"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.",
+				[]string{"kind"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		errors: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_md5_errors",
+				"Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.",
+				[]string{"kind"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		matched: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_md5_matched",
+				"Matched hosts for md5sum(s) reported by the swift-recon tool.",
+				[]string{"kind"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		notMatched: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_md5_not_matched",
+				"Not matched hosts for md5sum(s) reported by the swift-recon tool.",
+				[]string{"kind"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 	}
 }
 
-var (
-	clusterMD5AllDesc = prometheus.NewDesc(
-		"swift_cluster_md5_all",
-		"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.",
-		[]string{"kind"}, nil,
-	)
-	clusterMD5MatchedDesc = prometheus.NewDesc(
-		"swift_cluster_md5_matched",
-		"Matched hosts for md5sum(s) reported by the swift-recon tool.",
-		[]string{"kind"}, nil,
-	)
-	clusterMD5NotMatchedDesc = prometheus.NewDesc(
-		"swift_cluster_md5_not_matched",
-		"Not matched hosts for md5sum(s) reported by the swift-recon tool.",
-		[]string{"kind"}, nil,
-	)
-	clusterMD5ErrorsDesc = prometheus.NewDesc(
-		"swift_cluster_md5_errors",
-		"Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.",
-		[]string{"kind"}, nil,
-	)
-)
+// reconMD5Task implements the collector.collectorTask interface.
+func (t *reconMD5Task) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.all.describe(ch)
+	t.errors.describe(ch)
+	t.matched.describe(ch)
+	t.notMatched.describe(ch)
+}
 
-var reconMD5Rx = regexp.MustCompile(
-	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sum(?:s)?\s*([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`)
-
-func reconMD5Task(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	errCount := 0
-	cmdArgs := []string{"--md5"}
-	defer func() {
-		sendReconErrorCount(ch, cmdArgs, errCount)
-	}()
-
-	cmd := exec.Command(pathToReconExecutable, cmdArgs...)
-	out, err := cmd.Output()
+// reconMD5Task implements the collector.collectorTask interface.
+func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+	exitCode := 0
+	cmdArg := "--md5"
+	out, err := exec.Command(t.pathToReconExecutable, cmdArg).Output()
+	if err == nil {
+		matchList := t.md5OutputRx.FindAllSubmatch(out, -1)
+		if len(matchList) > 0 {
+			for _, match := range matchList {
+				var totalHosts, errsEncountered float64
+				matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
+				if err == nil {
+					totalHosts, err = strconv.ParseFloat(string(match[3]), 64)
+					if err == nil {
+						errsEncountered, err = strconv.ParseFloat(string(match[4]), 64)
+						if err == nil {
+							kind := strings.ReplaceAll(string(match[1]), ".", "")
+							notMatchedHosts := totalHosts - matchedHosts
+							all := matchedHosts + notMatchedHosts + errsEncountered
+							ch <- t.all.mustNewConstMetric(all, kind)
+							ch <- t.errors.mustNewConstMetric(errsEncountered, kind)
+							ch <- t.matched.mustNewConstMetric(matchedHosts, kind)
+							ch <- t.notMatched.mustNewConstMetric(notMatchedHosts, kind)
+						}
+					}
+				}
+				if err != nil {
+					exitCode = 1
+					logg.Error("swift dispersion: %s: %s", cmdArg, err.Error())
+				}
+			}
+		} else {
+			err = errors.New("command did not return any usable output")
+		}
+	}
 	if err != nil {
-		logg.Error("recon collector: %s: %v", taskName, err)
-		errCount++
-		return
+		exitCode = 1
+		logg.Error("swift dispersion: %s: %s", cmdArg, err.Error())
 	}
 
-	matchList := reconMD5Rx.FindAllSubmatch(out, -1)
-	if len(matchList) == 0 {
-		logg.Error("recon collector: %s: command %q did not return any usable output", taskName, cmd)
-		errCount++
-		return
-	}
+	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArg)
+}
 
-	for _, match := range matchList {
-		kind := strings.ReplaceAll(string(match[1]), ".", "")
-		matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
-		if err != nil {
-			logg.Error("recon collector: %s: %v", taskName, err)
-			errCount++
-			continue
-		}
-		totalHosts, err := strconv.ParseFloat(string(match[3]), 64)
-		if err != nil {
-			logg.Error("recon collector: %s: %v", taskName, err)
-			errCount++
-			continue
-		}
-		notMatchedHosts := totalHosts - matchedHosts
-		errsEncountered, err := strconv.ParseFloat(string(match[4]), 64)
-		if err != nil {
-			logg.Error("recon collector: %s: %v", taskName, err)
-			errCount++
-			continue
-		}
+// reconUpdaterSweepTask implements the collector.collectorTask interface.
+type reconUpdaterSweepTask struct {
+	pathToReconExecutable string
 
-		ch <- prometheus.MustNewConstMetric(
-			clusterMD5AllDesc,
-			prometheus.GaugeValue, matchedHosts+notMatchedHosts+errsEncountered,
-			kind,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterMD5MatchedDesc,
-			prometheus.GaugeValue, matchedHosts,
-			kind,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterMD5NotMatchedDesc,
-			prometheus.GaugeValue, notMatchedHosts,
-			kind,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterMD5ErrorsDesc,
-			prometheus.GaugeValue, errsEncountered,
-			kind,
-		)
+	containerTime typedDesc
+	objectTime    typedDesc
+}
+
+func newReconUpdaterSweepTask(pathToReconExecutable string) collectorTask {
+	return &reconUpdaterSweepTask{
+		pathToReconExecutable: pathToReconExecutable,
+		containerTime: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_containers_updater_sweep_time",
+				"Container updater sweep time reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		objectTime: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_objects_updater_sweep_time",
+				"Object updater sweep time reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 	}
 }
 
-var (
-	clusterCntrUpdaterSweepTimeDesc = prometheus.NewDesc(
-		"swift_cluster_containers_updater_sweep_time",
-		"Container updater sweep time reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterObjUpdaterSweepTimeDesc = prometheus.NewDesc(
-		"swift_cluster_objects_updater_sweep_time",
-		"Object updater sweep time reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-)
+// reconUpdaterSweepTask implements the collector.collectorTask interface.
+func (t *reconUpdaterSweepTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.containerTime.describe(ch)
+	t.objectTime.describe(ch)
+}
 
-func reconUpdaterSweepTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
+// reconUpdaterSweepTask implements the collector.collectorTask interface.
+func (t *reconUpdaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	serverTypes := []string{"container", "object"}
 	for _, server := range serverTypes {
-		errCount := 0
+		exitCode := 0
 		cmdArgs := []string{server, "--updater", "--verbose"}
-
-		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
+		outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
 		if err == nil {
-			for hostname, dataBytes := range result {
+			for hostname, dataBytes := range outputPerHost {
 				var data struct {
 					ContainerUpdaterSweepTime float64 `json:"container_updater_sweep"`
 					ObjectUpdaterSweepTime    float64 `json:"object_updater_sweep"`
 				}
 				err := json.Unmarshal(dataBytes, &data)
 				if err != nil {
-					logg.Error("recon collector: %s: %s: %s: %v", taskName, server, hostname, err)
-					errCount++
-					continue
+					exitCode = 1
+					logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+					continue // to next host
 				}
 
 				val := data.ContainerUpdaterSweepTime
-				desc := clusterCntrUpdaterSweepTimeDesc
+				desc := t.containerTime
 				if server == "object" {
 					val = data.ObjectUpdaterSweepTime
-					desc = clusterObjUpdaterSweepTimeDesc
+					desc = t.objectTime
 				}
 
-				ch <- prometheus.MustNewConstMetric(
-					desc,
-					prometheus.GaugeValue, val,
-					hostname,
-				)
+				ch <- desc.mustNewConstMetric(val, hostname)
 			}
 		} else {
-			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
-			errCount++
+			exitCode = 1
+			logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
 		}
 
-		sendReconErrorCount(ch, cmdArgs, errCount)
+		ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
 	}
 }
 
-var (
-	clusterAccReplAgeDesc = prometheus.NewDesc(
-		"swift_cluster_accounts_replication_age",
-		"Account replication age reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterAccReplDurDesc = prometheus.NewDesc(
-		"swift_cluster_accounts_replication_duration",
-		"Account replication duration reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
+// reconReplicationTask implements the collector.collectorTask interface.
+type reconReplicationTask struct {
+	pathToReconExecutable string
 
-	clusterCntrReplAgeDesc = prometheus.NewDesc(
-		"swift_cluster_containers_replication_age",
-		"Container replication age reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterCntrReplDurDesc = prometheus.NewDesc(
-		"swift_cluster_containers_replication_duration",
-		"Container replication duration reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
+	accountReplicationAge        typedDesc
+	accountReplicationDuration   typedDesc
+	containerReplicationAge      typedDesc
+	containerReplicationDuration typedDesc
+	objectReplicationAge         typedDesc
+	objectReplicationDuration    typedDesc
+}
 
-	clusterObjReplAgeDesc = prometheus.NewDesc(
-		"swift_cluster_objects_replication_age",
-		"Object replication age reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterObjReplDurDesc = prometheus.NewDesc(
-		"swift_cluster_objects_replication_duration",
-		"Object replication duration reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-)
+func newReconReplicationTask(pathToReconExecutable string) collectorTask {
+	return &reconReplicationTask{
+		pathToReconExecutable: pathToReconExecutable,
+		accountReplicationAge: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_accounts_replication_age",
+				"Account replication age reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		accountReplicationDuration: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_accounts_replication_duration",
+				"Account replication duration reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		containerReplicationAge: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_containers_replication_age",
+				"Container replication age reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		containerReplicationDuration: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_containers_replication_duration",
+				"Container replication duration reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		objectReplicationAge: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_objects_replication_age",
+				"Object replication age reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		objectReplicationDuration: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_objects_replication_duration",
+				"Object replication duration reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+	}
+}
 
-func reconReplicationTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
+// reconReplicationTask implements the collector.collectorTask interface.
+func (t *reconReplicationTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.accountReplicationAge.describe(ch)
+	t.accountReplicationDuration.describe(ch)
+	t.containerReplicationAge.describe(ch)
+	t.containerReplicationDuration.describe(ch)
+	t.objectReplicationAge.describe(ch)
+	t.objectReplicationDuration.describe(ch)
+}
+
+// reconReplicationTask implements the collector.collectorTask interface.
+func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	serverTypes := []string{"account", "container", "object"}
 	for _, server := range serverTypes {
-		errCount := 0
+		exitCode := 0
 		cmdArgs := []string{server, "--replication", "--verbose"}
 
-		var ageDesc, durDesc *prometheus.Desc
+		var ageTypedDesc, durTypedDesc typedDesc
 		switch server {
 		case "account":
-			ageDesc = clusterAccReplAgeDesc
-			durDesc = clusterAccReplDurDesc
+			ageTypedDesc = t.accountReplicationAge
+			durTypedDesc = t.accountReplicationDuration
 		case "container":
-			ageDesc = clusterCntrReplAgeDesc
-			durDesc = clusterCntrReplDurDesc
+			ageTypedDesc = t.containerReplicationAge
+			durTypedDesc = t.containerReplicationDuration
 		case "object":
-			ageDesc = clusterObjReplAgeDesc
-			durDesc = clusterObjReplDurDesc
+			ageTypedDesc = t.objectReplicationAge
+			durTypedDesc = t.objectReplicationDuration
 		}
 
-		result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
+		outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
 		if err == nil {
-			for hostname, dataBytes := range result {
+			for hostname, dataBytes := range outputPerHost {
 				var data struct {
 					ReplicationLast float64 `json:"replication_last"`
 					ReplicationTime float64 `json:"replication_time"`
 				}
 				err := json.Unmarshal(dataBytes, &data)
 				if err != nil {
-					logg.Error("recon collector: %s: %s: %s: %v", taskName, server, hostname, err)
-					errCount++
-					continue
+					exitCode = 1
+					logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+					continue // to next host
 				}
 
-				ch <- prometheus.MustNewConstMetric(
-					ageDesc,
-					prometheus.GaugeValue, data.ReplicationLast,
-					hostname,
-				)
-				ch <- prometheus.MustNewConstMetric(
-					durDesc,
-					prometheus.GaugeValue, data.ReplicationTime,
-					hostname,
-				)
+				ch <- ageTypedDesc.mustNewConstMetric(data.ReplicationLast, hostname)
+				ch <- durTypedDesc.mustNewConstMetric(data.ReplicationTime, hostname)
 			}
 		} else {
-			logg.Error("recon collector: %s: %s: %v", taskName, server, err)
-			errCount++
+			exitCode = 1
+			logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
 		}
 
-		sendReconErrorCount(ch, cmdArgs, errCount)
+		ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
 	}
 }
 
-var (
-	clusterAccQuarantinedDesc = prometheus.NewDesc(
-		"swift_cluster_accounts_quarantined",
-		"Quarantined accounts reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterCntrQuarantinedDesc = prometheus.NewDesc(
-		"swift_cluster_containers_quarantined",
-		"Quarantined containers reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-	clusterObjQuarantinedDesc = prometheus.NewDesc(
-		"swift_cluster_objects_quarantined",
-		"Quarantined objects reported by the swift-recon tool.",
-		[]string{"storage_ip"}, nil,
-	)
-)
+// reconQuarantinedTask implements the collector.collectorTask interface.
+type reconQuarantinedTask struct {
+	pathToReconExecutable string
 
-func reconQuarantinedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	errCount := 0
+	accounts   typedDesc
+	containers typedDesc
+	objects    typedDesc
+}
+
+func newReconQuarantinedTask(pathToReconExecutable string) collectorTask {
+	return &reconQuarantinedTask{
+		pathToReconExecutable: pathToReconExecutable,
+		accounts: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_accounts_quarantined",
+				"Quarantined accounts reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		containers: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_containers_quarantined",
+				"Quarantined containers reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+		objects: typedDesc{
+			desc: prometheus.NewDesc("swift_cluster_objects_quarantined",
+				"Quarantined objects reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
+	}
+}
+
+// reconQuarantinedTask implements the collector.collectorTask interface.
+func (t *reconQuarantinedTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.accounts.describe(ch)
+	t.containers.describe(ch)
+	t.objects.describe(ch)
+}
+
+// reconQuarantinedTask implements the collector.collectorTask interface.
+func (t *reconQuarantinedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+	exitCode := 0
 	cmdArgs := []string{"--quarantined", "--verbose"}
-	defer func() {
-		sendReconErrorCount(ch, cmdArgs, errCount)
-	}()
+	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	if err == nil {
+		for hostname, dataBytes := range outputPerHost {
+			var data struct {
+				Objects    int64 `json:"objects"`
+				Accounts   int64 `json:"accounts"`
+				Containers int64 `json:"containers"`
+			}
+			err := json.Unmarshal(dataBytes, &data)
+			if err != nil {
+				exitCode = 1
+				logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+				continue // to next host
+			}
 
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
-	if err != nil {
-		logg.Error("recon collector: %s: %v", taskName, err)
-		errCount++
-		return
+			ch <- t.accounts.mustNewConstMetric(float64(data.Accounts), hostname)
+			ch <- t.containers.mustNewConstMetric(float64(data.Containers), hostname)
+			ch <- t.objects.mustNewConstMetric(float64(data.Objects), hostname)
+		}
+	} else {
+		exitCode = 1
+		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
 	}
 
-	for hostname, dataBytes := range result {
-		var data struct {
-			Objects    int64 `json:"objects"`
-			Accounts   int64 `json:"accounts"`
-			Containers int64 `json:"containers"`
-		}
-		err := json.Unmarshal(dataBytes, &data)
-		if err != nil {
-			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
-			errCount++
-			continue
-		}
+	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+}
 
-		ch <- prometheus.MustNewConstMetric(
-			clusterAccQuarantinedDesc,
-			prometheus.GaugeValue, float64(data.Accounts),
-			hostname,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterCntrQuarantinedDesc,
-			prometheus.GaugeValue, float64(data.Containers),
-			hostname,
-		)
-		ch <- prometheus.MustNewConstMetric(
-			clusterObjQuarantinedDesc,
-			prometheus.GaugeValue, float64(data.Objects),
-			hostname,
-		)
+// reconUnmountedTask implements the collector.collectorTask interface.
+type reconUnmountedTask struct {
+	pathToReconExecutable string
+	unmountedDrives       typedDesc
+}
+
+func newReconUnmountedTask(pathToReconExecutable string) collectorTask {
+	return &reconUnmountedTask{
+		pathToReconExecutable: pathToReconExecutable,
+		unmountedDrives: typedDesc{
+			desc: prometheus.NewDesc(
+				"swift_cluster_drives_unmounted",
+				"Unmounted drives reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 	}
 }
 
-var clusterDrivesUnmountedDesc = prometheus.NewDesc(
-	"swift_cluster_drives_unmounted",
-	"Unmounted drives reported by the swift-recon tool.",
-	[]string{"storage_ip"}, nil,
-)
+// reconUnmountedTask implements the collector.collectorTask interface.
+func (t *reconUnmountedTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.unmountedDrives.describe(ch)
+}
 
-func reconUnmountedTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	errCount := 0
+// reconUnmountedTask implements the collector.collectorTask interface.
+func (t *reconUnmountedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+	exitCode := 0
 	cmdArgs := []string{"--unmounted", "--verbose"}
-	defer func() {
-		sendReconErrorCount(ch, cmdArgs, errCount)
-	}()
+	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	if err == nil {
+		for hostname, dataBytes := range outputPerHost {
+			var disksData []struct {
+				Device string `json:"device"`
+			}
+			err := json.Unmarshal(dataBytes, &disksData)
+			if err != nil {
+				exitCode = 1
+				logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+				continue // to next host
+			}
 
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
-	if err != nil {
-		logg.Error("recon collector: %s: %v", taskName, err)
-		errCount++
-		return
+			ch <- t.unmountedDrives.mustNewConstMetric(float64(len(disksData)), hostname)
+		}
+	} else {
+		exitCode = 1
+		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
 	}
 
-	for hostname, dataBytes := range result {
-		var disksData []struct {
-			Device string `json:"device"`
-		}
-		err := json.Unmarshal(dataBytes, &disksData)
-		if err != nil {
-			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
-			errCount++
-			continue
-		}
+	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+}
 
-		ch <- prometheus.MustNewConstMetric(
-			clusterDrivesUnmountedDesc,
-			prometheus.GaugeValue, float64(len(disksData)),
-			hostname,
-		)
+// reconDriveAuditTask implements the collector.collectorTask interface.
+type reconDriveAuditTask struct {
+	pathToReconExecutable string
+	auditErrors           typedDesc
+}
+
+func newReconDriveAuditTask(pathToReconExecutable string) collectorTask {
+	return &reconDriveAuditTask{
+		pathToReconExecutable: pathToReconExecutable,
+		auditErrors: typedDesc{
+			desc: prometheus.NewDesc(
+				"swift_cluster_drives_audit_errors",
+				"Drive audit errors reported by the swift-recon tool.",
+				[]string{"storage_ip"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 	}
 }
 
-var clusterDrivesAuditErrsDesc = prometheus.NewDesc(
-	"swift_cluster_drives_audit_errors",
-	"Drive audit errors reported by the swift-recon tool.",
-	[]string{"storage_ip"}, nil,
-)
+// reconDriveAuditTask implements the collector.collectorTask interface.
+func (t *reconDriveAuditTask) describeMetrics(ch chan<- *prometheus.Desc) {
+	t.auditErrors.describe(ch)
+}
 
-func reconDriveAuditTask(taskName, pathToReconExecutable string, ch chan<- prometheus.Metric) {
-	errCount := 0
+// reconDriveAuditTask implements the collector.collectorTask interface.
+func (t *reconDriveAuditTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+	exitCode := 0
 	cmdArgs := []string{"--driveaudit", "--verbose"}
-	defer func() {
-		sendReconErrorCount(ch, cmdArgs, errCount)
-	}()
+	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	if err == nil {
+		for hostname, dataBytes := range outputPerHost {
+			var data struct {
+				DriveAuditErrors int64 `json:"drive_audit_errors"`
+			}
+			err := json.Unmarshal(dataBytes, &data)
+			if err != nil {
+				exitCode = 1
+				logg.Error("swift dispersion: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, err.Error())
+				continue // to next host
+			}
 
-	result, err := getSwiftReconOutputPerHost(pathToReconExecutable, cmdArgs...)
-	if err != nil {
-		logg.Error("recon collector: %s: %v", taskName, err)
-		errCount++
-		return
+			ch <- t.auditErrors.mustNewConstMetric(float64(data.DriveAuditErrors), hostname)
+		}
+	} else {
+		exitCode = 1
+		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
 	}
 
-	for hostname, dataBytes := range result {
-		var data struct {
-			DriveAuditErrors int64 `json:"drive_audit_errors"`
-		}
-		err := json.Unmarshal(dataBytes, &data)
-		if err != nil {
-			logg.Error("recon collector: %s: %s: %v", taskName, hostname, err)
-			errCount++
-			continue
-		}
-
-		ch <- prometheus.MustNewConstMetric(
-			clusterDrivesAuditErrsDesc,
-			prometheus.GaugeValue, float64(data.DriveAuditErrors),
-			hostname,
-		)
-	}
+	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -611,7 +658,7 @@ func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map
 
 	matchList := reconHostOutputRx.FindAllSubmatch(out, -1)
 	if len(matchList) == 0 {
-		return nil, fmt.Errorf("command %q did not return any usable output", cmd)
+		return nil, errors.New("command did not return any usable output")
 	}
 
 	result := make(map[string][]byte)
