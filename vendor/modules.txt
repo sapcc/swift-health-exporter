@@ -1,4 +1,4 @@
-# github.com/alecthomas/kingpin v2.2.6+incompatible
+# github.com/alecthomas/kingpin v1.3.8-0.20191202215629-0ce3bba646ba
 github.com/alecthomas/kingpin
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 github.com/alecthomas/template
