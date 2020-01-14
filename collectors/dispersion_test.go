@@ -35,6 +35,22 @@ func TestDispersionCollector(t *testing.T) {
 		Method:       "GET",
 		Path:         "/metrics",
 		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile("fixtures/dispersion_metrics.prom"),
+		ExpectBody:   assert.FixtureFile("fixtures/dispersion_successful_collect.prom"),
+	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+}
+
+func TestDispersionCollectorWithErrors(t *testing.T) {
+	pathToExecutable, err := filepath.Abs("../build/mock-swift-dispersion-report-with-errors")
+	if err != nil {
+		t.Error(err)
+	}
+
+	registry := prometheus.NewPedanticRegistry()
+	registry.MustRegister(NewDispersionCollector(pathToExecutable))
+	assert.HTTPRequest{
+		Method:       "GET",
+		Path:         "/metrics",
+		ExpectStatus: 200,
+		ExpectBody:   assert.FixtureFile("fixtures/dispersion_failed_collect.prom"),
 	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }
