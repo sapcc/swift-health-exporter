@@ -43,7 +43,7 @@ static-check: FORCE
 	@$(GO) vet $(GO_BUILDFLAGS) $(GO_ALLPKGS)
 
 # detailed unit test run (incl. test coverage)
-build/%.cover.out: FORCE build/mock-swift-dispersion-report build/mock-swift-recon
+build/%.cover.out: FORCE build/mock-tools
 	@printf "\e[1;36m>> go test $(subst _,/,$*)\e[0m\n"
 	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' -coverprofile=$@ -covermode=count -coverpkg=$(subst $(space),$(comma),$(GO_COVERPKGS)) $(subst _,/,$*)
 build/cover.out: $(GO_COVERFILES)
@@ -51,11 +51,18 @@ build/cover.out: $(GO_COVERFILES)
 build/cover.html: build/cover.out
 	$(GO) tool cover -html $< -o $@
 
-build/mock-swift-dispersion-report: FORCE
-	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-dispersion-report'
+# quick unit test run
+quick-check: FORCE all build/mock-tools $(addprefix quick-check-,$(subst /,_,$(GO_TESTPKGS)))
+quick-check-%:
+	@printf "\e[1;36m>> go test $(subst _,/,$*)\e[0m\n"
+	$(GO) test $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' $(subst _,/,$*)
+	@printf "\e[1;32m>> Unit tests successful.\e[0m\n"
 
-build/mock-swift-recon: FORCE
+build/mock-tools: FORCE
+	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-dispersion-report'
+	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-dispersion-report-with-errors'
 	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-recon'
+	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-recon-with-errors'
 
 clean: FORCE
 	rm -rf -- build
