@@ -35,6 +35,22 @@ func TestReconCollector(t *testing.T) {
 		Method:       "GET",
 		Path:         "/metrics",
 		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile("fixtures/recon_metrics.prom"),
+		ExpectBody:   assert.FixtureFile("fixtures/recon_successful_metrics.prom"),
+	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+}
+
+func TestReconCollectorWithErrors(t *testing.T) {
+	pathToExecutable, err := filepath.Abs("../build/mock-swift-recon-with-errors")
+	if err != nil {
+		t.Error(err)
+	}
+
+	registry := prometheus.NewPedanticRegistry()
+	registry.MustRegister(NewReconCollector(pathToExecutable))
+	assert.HTTPRequest{
+		Method:       "GET",
+		Path:         "/metrics",
+		ExpectStatus: 200,
+		ExpectBody:   assert.FixtureFile("fixtures/recon_failed_collect.prom"),
 	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }

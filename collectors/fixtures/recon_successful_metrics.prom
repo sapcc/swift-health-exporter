@@ -114,10 +114,13 @@ swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.1"} 0
 swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.2"} 0.06518201289089147
 # HELP swift_recon_task_exit_code The exit code for a Swift Recon query execution.
 # TYPE swift_recon_task_exit_code gauge
-swift_recon_task_exit_code{failed_query="",task="diskUsage"} 0
-swift_recon_task_exit_code{failed_query="",task="driveAudit"} 0
-swift_recon_task_exit_code{failed_query="",task="md5"} 0
-swift_recon_task_exit_code{failed_query="",task="quarantined"} 0
-swift_recon_task_exit_code{failed_query="",task="replication"} 0
-swift_recon_task_exit_code{failed_query="",task="unmounted"} 0
-swift_recon_task_exit_code{failed_query="",task="updaterSweep"} 0
+swift_recon_task_exit_code{query="--diskusage --verbose"} 0
+swift_recon_task_exit_code{query="--driveaudit --verbose"} 0
+swift_recon_task_exit_code{query="--md5"} 0
+swift_recon_task_exit_code{query="--quarantined --verbose"} 0
+swift_recon_task_exit_code{query="--unmounted --verbose"} 0
+swift_recon_task_exit_code{query="account --replication --verbose"} 0
+swift_recon_task_exit_code{query="container --replication --verbose"} 0
+swift_recon_task_exit_code{query="container --updater --verbose"} 0
+swift_recon_task_exit_code{query="object --replication --verbose"} 0
+swift_recon_task_exit_code{query="object --updater --verbose"} 0
