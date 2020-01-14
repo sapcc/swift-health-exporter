@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package collectors
+package collector
 
 import (
 	"path/filepath"
@@ -23,34 +23,34 @@ import (
 	"github.com/sapcc/go-bits/assert"
 )
 
-func TestReconCollector(t *testing.T) {
-	pathToExecutable, err := filepath.Abs("../build/mock-swift-recon")
+func TestDispersionCollector(t *testing.T) {
+	pathToExecutable, err := filepath.Abs("../build/mock-swift-dispersion-report")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable))
+	registry.MustRegister(NewDispersionCollector(pathToExecutable))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
 		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile("fixtures/recon_successful_metrics.prom"),
+		ExpectBody:   assert.FixtureFile("fixtures/dispersion_successful_collect.prom"),
 	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }
 
-func TestReconCollectorWithErrors(t *testing.T) {
-	pathToExecutable, err := filepath.Abs("../build/mock-swift-recon-with-errors")
+func TestDispersionCollectorWithErrors(t *testing.T) {
+	pathToExecutable, err := filepath.Abs("../build/mock-swift-dispersion-report-with-errors")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable))
+	registry.MustRegister(NewDispersionCollector(pathToExecutable))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
 		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile("fixtures/recon_failed_collect.prom"),
+		ExpectBody:   assert.FixtureFile("fixtures/dispersion_failed_collect.prom"),
 	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }

@@ -21,7 +21,7 @@ GO_ALLPKGS := $(shell go list $(GO_BUILDFLAGS) $(PKG)/...)
 # which packages to test with `go test`?
 GO_TESTPKGS := $(shell go list $(GO_BUILDFLAGS) -f '{{if .TestGoFiles}}{{.ImportPath}}{{end}}' $(PKG)/...)
 # which packages to measure coverage for?
-GO_COVERPKGS := $(shell go list $(GO_BUILDFLAGS) $(PKG) $(PKG)/collectors)
+GO_COVERPKGS := $(shell go list $(GO_BUILDFLAGS) $(PKG) $(PKG)/collector)
 # output files from `go test`
 GO_COVERFILES := $(patsubst %,build/%.cover.out,$(subst /,_,$(GO_TESTPKGS)))
 

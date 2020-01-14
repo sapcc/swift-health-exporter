@@ -25,7 +25,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
 	"github.com/sapcc/go-bits/logg"
-	"github.com/sapcc/swift-health-exporter/collectors"
+	"github.com/sapcc/swift-health-exporter/collector"
 )
 
 func main() {
@@ -33,8 +33,8 @@ func main() {
 	swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 	swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 
-	prometheus.MustRegister(collectors.NewDispersionCollector(swiftDispersionReportPath))
-	prometheus.MustRegister(collectors.NewReconCollector(swiftReconPath))
+	prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath))
+	prometheus.MustRegister(collector.NewReconCollector(swiftReconPath))
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
