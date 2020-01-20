@@ -35,7 +35,7 @@ func TestReconCollector(t *testing.T) {
 		Method:       "GET",
 		Path:         "/metrics",
 		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile("fixtures/recon_successful_metrics.prom"),
+		ExpectBody:   assert.FixtureFile("fixtures/recon_successful_collect.prom"),
 	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 }
 
