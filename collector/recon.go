@@ -252,7 +252,7 @@ func (t *reconMD5Task) describeMetrics(ch chan<- *prometheus.Desc) {
 func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
 	cmdArg := "--md5"
-	out, err := exec.Command(t.pathToReconExecutable, cmdArg).Output()
+	out, err := exec.Command(t.pathToReconExecutable, cmdArg).CombinedOutput()
 	if err == nil {
 		matchList := t.md5OutputRx.FindAllSubmatch(out, -1)
 		if len(matchList) > 0 {
@@ -651,7 +651,7 @@ var reconHostOutputRx = regexp.MustCompile(`(?m)^-> https?://([a-zA-Z0-9-.]+)\S*
 
 func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
 	cmd := exec.Command(pathToExecutable, cmdArgs...)
-	out, err := cmd.Output()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return nil, err
 	}

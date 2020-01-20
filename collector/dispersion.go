@@ -148,7 +148,7 @@ func (t *dispersionReportDumpTask) describeMetrics(ch chan<- *prometheus.Desc) {
 func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
 	cmdArg := "--dump-json"
-	out, err := exec.Command(t.pathToDispersionExecutable, cmdArg).Output()
+	out, err := exec.Command(t.pathToDispersionExecutable, cmdArg).CombinedOutput()
 	if err == nil {
 		var data struct {
 			Object struct {
