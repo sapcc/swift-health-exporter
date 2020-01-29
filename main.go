@@ -34,7 +34,7 @@ func main() {
 	swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 
 	prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath))
-	prometheus.MustRegister(collector.NewReconCollector(swiftReconPath))
+	prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, false))
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations

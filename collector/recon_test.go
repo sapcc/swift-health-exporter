@@ -30,7 +30,7 @@ func TestReconCollector(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable))
+	registry.MustRegister(NewReconCollector(pathToExecutable, true))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -46,7 +46,7 @@ func TestReconCollectorWithErrors(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable))
+	registry.MustRegister(NewReconCollector(pathToExecutable, true))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

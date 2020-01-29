@@ -26,16 +26,18 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
+	"github.com/sapcc/swift-health-exporter/test/cmd/utils"
 )
 
 // ReconCollector implements the prometheus.Collector interface.
 type ReconCollector struct {
 	taskExitCode typedDesc
 	tasks        []collectorTask
+	isTest       bool
 }
 
 // NewReconCollector creates a new ReconCollector.
-func NewReconCollector(pathToExecutable string) *ReconCollector {
+func NewReconCollector(pathToExecutable string, isTest bool) *ReconCollector {
 	return &ReconCollector{
 		taskExitCode: typedDesc{
 			desc: prometheus.NewDesc("swift_recon_task_exit_code",
@@ -48,7 +50,7 @@ func NewReconCollector(pathToExecutable string) *ReconCollector {
 			newReconDriveAuditTask(pathToExecutable),
 			newReconMD5Task(pathToExecutable),
 			newReconQuarantinedTask(pathToExecutable),
-			newReconReplicationTask(pathToExecutable),
+			newReconReplicationTask(pathToExecutable, isTest),
 			newReconUnmountedTask(pathToExecutable),
 			newReconUpdaterSweepTask(pathToExecutable),
 		},
@@ -364,6 +366,7 @@ func (t *reconUpdaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exit
 // reconReplicationTask implements the collector.collectorTask interface.
 type reconReplicationTask struct {
 	pathToReconExecutable string
+	isTest                bool
 
 	accountReplicationAge        typedDesc
 	accountReplicationDuration   typedDesc
@@ -373,9 +376,10 @@ type reconReplicationTask struct {
 	objectReplicationDuration    typedDesc
 }
 
-func newReconReplicationTask(pathToReconExecutable string) collectorTask {
+func newReconReplicationTask(pathToReconExecutable string, isTest bool) collectorTask {
 	return &reconReplicationTask{
 		pathToReconExecutable: pathToReconExecutable,
+		isTest:                isTest,
 		accountReplicationAge: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_accounts_replication_age",
 				"Account replication age reported by the swift-recon tool.",
@@ -459,8 +463,15 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 					continue // to next host
 				}
 
-				ch <- ageTypedDesc.mustNewConstMetric(data.ReplicationLast, hostname)
-				ch <- durTypedDesc.mustNewConstMetric(data.ReplicationTime, hostname)
+				if data.ReplicationLast > 0 {
+					now := float64(time.Now().Unix())
+					if t.isTest {
+						now = float64(utils.TimeNow().Second())
+					}
+					tDiff := now - data.ReplicationLast
+					ch <- ageTypedDesc.mustNewConstMetric(tDiff, hostname)
+				}
+				ch <- durTypedDesc.mustNewConstMetric(data.ReplicationTime, hostname) // good
 			}
 		} else {
 			exitCode = 1

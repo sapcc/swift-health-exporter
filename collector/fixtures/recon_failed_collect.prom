@@ -3,7 +3,7 @@
 swift_cluster_accounts_quarantined{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_accounts_replication_age Account replication age reported by the swift-recon tool.
 # TYPE swift_cluster_accounts_replication_age gauge
-swift_cluster_accounts_replication_age{storage_ip="10.0.0.1"} 1.579007237099724e+09
+swift_cluster_accounts_replication_age{storage_ip="10.0.0.1"} -1.579007236099724e+09
 # HELP swift_cluster_accounts_replication_duration Account replication duration reported by the swift-recon tool.
 # TYPE swift_cluster_accounts_replication_duration gauge
 swift_cluster_accounts_replication_duration{storage_ip="10.0.0.1"} 23.422847032546997
@@ -12,7 +12,7 @@ swift_cluster_accounts_replication_duration{storage_ip="10.0.0.1"} 23.4228470325
 swift_cluster_containers_quarantined{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_replication_age Container replication age reported by the swift-recon tool.
 # TYPE swift_cluster_containers_replication_age gauge
-swift_cluster_containers_replication_age{storage_ip="10.0.0.1"} 1.579007236617117e+09
+swift_cluster_containers_replication_age{storage_ip="10.0.0.1"} -1.579007235617117e+09
 # HELP swift_cluster_containers_replication_duration Container replication duration reported by the swift-recon tool.
 # TYPE swift_cluster_containers_replication_duration gauge
 swift_cluster_containers_replication_duration{storage_ip="10.0.0.1"} 98.37576985359192
@@ -30,7 +30,7 @@ swift_cluster_drives_unmounted{storage_ip="10.0.0.1"} 0
 swift_cluster_objects_quarantined{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_objects_replication_age Object replication age reported by the swift-recon tool.
 # TYPE swift_cluster_objects_replication_age gauge
-swift_cluster_objects_replication_age{storage_ip="10.0.0.1"} 1.57900646181673e+09
+swift_cluster_objects_replication_age{storage_ip="10.0.0.1"} -1.57900646081673e+09
 # HELP swift_cluster_objects_replication_duration Object replication duration reported by the swift-recon tool.
 # TYPE swift_cluster_objects_replication_duration gauge
 swift_cluster_objects_replication_duration{storage_ip="10.0.0.1"} 5.449508202075958
