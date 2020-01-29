@@ -70,5 +70,6 @@ clean: FORCE
 vendor: FORCE
 	$(GO) mod tidy
 	$(GO) mod vendor
+	$(GO) mod verify
 
 .PHONY: FORCE
