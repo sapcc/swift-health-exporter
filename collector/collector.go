@@ -14,7 +14,10 @@
 package collector
 
 import (
+	"context"
+	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -36,6 +39,12 @@ func (d *typedDesc) describe(ch chan<- *prometheus.Desc) {
 type collectorTask interface {
 	describeMetrics(ch chan<- *prometheus.Desc)
 	collectMetrics(ch chan<- prometheus.Metric, taskExitCodeTypedDesc typedDesc)
+}
+
+func runCommandWithTimeout(timeout time.Duration, name string, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return exec.CommandContext(ctx, name, args...).CombinedOutput()
 }
 
 func cmdArgsToStr(cmdArgs []string) string {

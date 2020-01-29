@@ -18,11 +18,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
@@ -252,7 +252,7 @@ func (t *reconMD5Task) describeMetrics(ch chan<- *prometheus.Desc) {
 func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
 	cmdArg := "--md5"
-	out, err := exec.Command(t.pathToReconExecutable, cmdArg).CombinedOutput()
+	out, err := runCommandWithTimeout(4*time.Second, t.pathToReconExecutable, cmdArg)
 	if err == nil {
 		matchList := t.md5OutputRx.FindAllSubmatch(out, -1)
 		if len(matchList) > 0 {
@@ -650,8 +650,7 @@ func (t *reconDriveAuditTask) collectMetrics(ch chan<- prometheus.Metric, exitCo
 var reconHostOutputRx = regexp.MustCompile(`(?m)^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
 
 func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	cmd := exec.Command(pathToExecutable, cmdArgs...)
-	out, err := cmd.CombinedOutput()
+	out, err := runCommandWithTimeout(4*time.Second, pathToExecutable, cmdArgs...)
 	if err != nil {
 		return nil, err
 	}
@@ -666,7 +665,7 @@ func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map
 		hostname := string(match[1])
 		data := match[2]
 
-		logg.Debug("output from command %q: %s: %s", cmd, hostname, string(data))
+		logg.Debug("output from command 'swift-recon %s': %s: %s", cmdArgsToStr(cmdArgs), hostname, string(data))
 
 		// sanitize JSON
 		data = bytes.ReplaceAll(data, []byte(`u'`), []byte(`'`))

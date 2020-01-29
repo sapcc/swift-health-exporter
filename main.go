@@ -52,7 +52,7 @@ func main() {
 // variable using the envKey (if defined). Otherwise it attempts to find this
 // path in the directories named by the "PATH" environment variable.
 //
-// exec.Command() alreadys uses LookPath() in case an executable name is
+// exec.Command() already uses LookPath() in case an executable name is
 // provided instead of a path, but we do this manually for two reasons:
 // 1. To terminate the program early in case the executable path could not be found.
 // 2. To save multiple LookPath() calls for the same executable.
