@@ -101,19 +101,19 @@ func newReconDiskUsageTask(pathToReconExecutable string) collectorTask {
 		capacityBytes: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_storage_capacity_bytes",
 				"Capacity storage bytes as reported by the swift-recon tool.",
-				[]string{"storage_ip"}, nil),
+				nil, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		freeBytes: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_storage_free_bytes",
 				"Free storage bytes as reported by the swift-recon tool.",
-				[]string{"storage_ip"}, nil),
+				nil, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		usedBytes: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_storage_used_bytes",
 				"Used storage bytes as reported by the swift-recon tool.",
-				[]string{"storage_ip"}, nil),
+				nil, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		fractionalUsage: typedDesc{
@@ -121,7 +121,7 @@ func newReconDiskUsageTask(pathToReconExecutable string) collectorTask {
 			// name uses the word percent instead of fractional.
 			desc: prometheus.NewDesc("swift_cluster_storage_used_percent",
 				"Fractional usage as reported by the swift-recon tool.",
-				[]string{"storage_ip"}, nil),
+				nil, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		fractionalUsageByDisk: typedDesc{
@@ -150,6 +150,7 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 	cmdArgs := []string{"--diskusage", "--verbose"}
 	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
+		var totalFree, totalUsed, totalSize int64
 		for hostname, dataBytes := range outputPerHost {
 			var disksData []struct {
 				Device  string `json:"device"`
@@ -165,7 +166,6 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 				continue // to next host
 			}
 
-			var totalFree, totalUsed, totalSize int64
 			for _, disk := range disksData {
 				if !(disk.Mounted) {
 					continue // to next disk
@@ -181,16 +181,17 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 				diskUsageRatio := float64(disk.Used) / float64(disk.Size)
 				ch <- t.fractionalUsageByDisk.mustNewConstMetric(diskUsageRatio, hostname, device)
 			}
-
-			usageRatio := float64(totalUsed) / float64(totalSize)
-			if totalSize == 0 {
-				usageRatio = 1.0
-			}
-			ch <- t.fractionalUsage.mustNewConstMetric(usageRatio, hostname)
-			ch <- t.usedBytes.mustNewConstMetric(float64(totalUsed), hostname)
-			ch <- t.freeBytes.mustNewConstMetric(float64(totalFree), hostname)
-			ch <- t.capacityBytes.mustNewConstMetric(float64(totalSize), hostname)
 		}
+
+		usageRatio := float64(totalUsed) / float64(totalSize)
+		if totalSize == 0 {
+			usageRatio = 1.0
+		}
+
+		ch <- t.fractionalUsage.mustNewConstMetric(usageRatio)
+		ch <- t.usedBytes.mustNewConstMetric(float64(totalUsed))
+		ch <- t.freeBytes.mustNewConstMetric(float64(totalFree))
+		ch <- t.capacityBytes.mustNewConstMetric(float64(totalSize))
 	} else {
 		exitCode = 1
 		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())

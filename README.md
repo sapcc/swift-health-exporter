@@ -88,9 +88,9 @@ for `swift-health-exporter`.
 | `swift_cluster_objects_replication_age`         | `storage_ip`         |
 | `swift_cluster_objects_replication_duration`    | `storage_ip`         |
 | `swift_cluster_objects_updater_sweep_time`      | `storage_ip`         |
-| `swift_cluster_storage_capacity_bytes`          | `storage_ip`         |
-| `swift_cluster_storage_free_bytes`              | `storage_ip`         |
-| `swift_cluster_storage_used_bytes`              | `storage_ip`         |
+| `swift_cluster_storage_capacity_bytes`          |                      |
+| `swift_cluster_storage_free_bytes`              |                      |
+| `swift_cluster_storage_used_bytes`              |                      |
 | `swift_cluster_storage_used_percent_by_disk`    | `storage_ip`, `disk` |
-| `swift_cluster_storage_used_percent`            | `storage_ip`         |
+| `swift_cluster_storage_used_percent`            |                      |
 | `swift_recon_exit_code`                         | `query`              |

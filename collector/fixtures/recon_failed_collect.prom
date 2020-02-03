@@ -39,16 +39,16 @@ swift_cluster_objects_replication_duration{storage_ip="10.0.0.1"} 5.449508202075
 swift_cluster_objects_updater_sweep_time{storage_ip="10.0.0.1"} 1.863548994064331
 # HELP swift_cluster_storage_capacity_bytes Capacity storage bytes as reported by the swift-recon tool.
 # TYPE swift_cluster_storage_capacity_bytes gauge
-swift_cluster_storage_capacity_bytes{storage_ip="10.0.0.1"} 8.3986504433664e+13
+swift_cluster_storage_capacity_bytes 8.3986504433664e+13
 # HELP swift_cluster_storage_free_bytes Free storage bytes as reported by the swift-recon tool.
 # TYPE swift_cluster_storage_free_bytes gauge
-swift_cluster_storage_free_bytes{storage_ip="10.0.0.1"} 7.8765751533568e+13
+swift_cluster_storage_free_bytes 7.8765751533568e+13
 # HELP swift_cluster_storage_used_bytes Used storage bytes as reported by the swift-recon tool.
 # TYPE swift_cluster_storage_used_bytes gauge
-swift_cluster_storage_used_bytes{storage_ip="10.0.0.1"} 5.220752900096e+12
+swift_cluster_storage_used_bytes 5.220752900096e+12
 # HELP swift_cluster_storage_used_percent Fractional usage as reported by the swift-recon tool.
 # TYPE swift_cluster_storage_used_percent gauge
-swift_cluster_storage_used_percent{storage_ip="10.0.0.1"} 0.062161807248682026
+swift_cluster_storage_used_percent 0.062161807248682026
 # HELP swift_cluster_storage_used_percent_by_disk Fractional usage of a disk as reported by the swift-recon tool.
 # TYPE swift_cluster_storage_used_percent_by_disk gauge
 swift_cluster_storage_used_percent_by_disk{disk="sdb01",storage_ip="10.0.0.1"} 0.06287556088217618
