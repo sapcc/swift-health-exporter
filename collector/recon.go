@@ -449,6 +449,7 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 			durTypedDesc = t.objectReplicationDuration
 		}
 
+		currentTime := float64(time.Now().Unix())
 		outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
 		if err == nil {
 			for hostname, dataBytes := range outputPerHost {
@@ -464,14 +465,13 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 				}
 
 				if data.ReplicationLast > 0 {
-					now := float64(time.Now().Unix())
 					if t.isTest {
-						now = float64(utils.TimeNow().Second())
+						currentTime = float64(utils.TimeNow().Second())
 					}
-					tDiff := now - data.ReplicationLast
+					tDiff := currentTime - data.ReplicationLast
 					ch <- ageTypedDesc.mustNewConstMetric(tDiff, hostname)
 				}
-				ch <- durTypedDesc.mustNewConstMetric(data.ReplicationTime, hostname) // good
+				ch <- durTypedDesc.mustNewConstMetric(data.ReplicationTime, hostname)
 			}
 		} else {
 			exitCode = 1
