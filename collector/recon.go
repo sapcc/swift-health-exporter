@@ -254,43 +254,48 @@ func (t *reconMD5Task) describeMetrics(ch chan<- *prometheus.Desc) {
 func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
 	cmdArg := "--md5"
+	defer func() {
+		ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArg)
+	}()
+
+	var matchList [][][]byte
 	out, err := runCommandWithTimeout(4*time.Second, t.pathToReconExecutable, cmdArg)
 	if err == nil {
-		matchList := t.md5OutputRx.FindAllSubmatch(out, -1)
-		if len(matchList) > 0 {
-			for _, match := range matchList {
-				var totalHosts, errsEncountered float64
-				matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
-				if err == nil {
-					totalHosts, err = strconv.ParseFloat(string(match[3]), 64)
-					if err == nil {
-						errsEncountered, err = strconv.ParseFloat(string(match[4]), 64)
-						if err == nil {
-							kind := strings.ReplaceAll(string(match[1]), ".", "")
-							notMatchedHosts := totalHosts - matchedHosts
-							all := matchedHosts + notMatchedHosts + errsEncountered
-							ch <- t.all.mustNewConstMetric(all, kind)
-							ch <- t.errors.mustNewConstMetric(errsEncountered, kind)
-							ch <- t.matched.mustNewConstMetric(matchedHosts, kind)
-							ch <- t.notMatched.mustNewConstMetric(notMatchedHosts, kind)
-						}
-					}
-				}
-				if err != nil {
-					exitCode = 1
-					logg.Error("swift recon: %s: %s", cmdArg, err.Error())
-				}
-			}
-		} else {
+		matchList = t.md5OutputRx.FindAllSubmatch(out, -1)
+		if len(matchList) == 0 {
 			err = errors.New("command did not return any usable output")
 		}
 	}
 	if err != nil {
 		exitCode = 1
 		logg.Error("swift recon: %s: %s", cmdArg, err.Error())
+		return
 	}
 
-	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArg)
+	for _, match := range matchList {
+		var totalHosts, errsEncountered float64
+		matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
+		if err == nil {
+			totalHosts, err = strconv.ParseFloat(string(match[3]), 64)
+			if err == nil {
+				errsEncountered, err = strconv.ParseFloat(string(match[4]), 64)
+				if err == nil {
+					kind := strings.ReplaceAll(string(match[1]), ".", "")
+					notMatchedHosts := totalHosts - matchedHosts
+					all := matchedHosts + notMatchedHosts + errsEncountered
+
+					ch <- t.all.mustNewConstMetric(all, kind)
+					ch <- t.errors.mustNewConstMetric(errsEncountered, kind)
+					ch <- t.matched.mustNewConstMetric(matchedHosts, kind)
+					ch <- t.notMatched.mustNewConstMetric(notMatchedHosts, kind)
+				}
+			}
+		}
+		if err != nil {
+			exitCode = 1
+			logg.Error("swift recon: %s: %s", cmdArg, err.Error())
+		}
+	}
 }
 
 // reconUpdaterSweepTask implements the collector.collectorTask interface.
