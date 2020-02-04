@@ -22,6 +22,7 @@ import (
 
 func main() {
 	serverTypeArg := kingpin.Arg("server-type", "Type of server.").Enum("account", "container", "object")
+	_ = kingpin.Flag("timeout", "Time to wait for a response from a server.").Short('t').Int()
 	verboseFlag := kingpin.Flag("verbose", "Print verbose info.").Short('v').Bool()
 	diskUsageFlag := kingpin.Flag("diskusage", "Get disk usage stats.").Short('d').Bool()
 	driveAuditFlag := kingpin.Flag("driveaudit", "Get drive audit error stats.").Bool()
