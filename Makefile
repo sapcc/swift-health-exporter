@@ -72,4 +72,8 @@ vendor: FORCE
 	$(GO) mod vendor
 	$(GO) mod verify
 
+update-deps: FORCE
+	$(GO) get -u ./...
+	make vendor
+
 .PHONY: FORCE
