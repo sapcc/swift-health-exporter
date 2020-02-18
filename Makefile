@@ -65,7 +65,7 @@ build/mock-tools: FORCE
 	$(GO) install $(GO_BUILDFLAGS) -ldflags '$(GO_LDFLAGS)' '$(PKG)/test/cmd/mock-swift-recon-with-errors'
 
 clean: FORCE
-	rm -rf -- build
+	rm -rf build/*
 
 vendor: FORCE
 	$(GO) mod tidy
