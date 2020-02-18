@@ -78,15 +78,17 @@ Disk usage: lowest: 5.88%, highest: 6.45%, avg: 6.21618072487%
 ===============================================================================`)
 
 var md5Data = []byte(`===============================================================================
---> Starting reconnaissance on 2 hosts (object)
+--> Starting reconnaissance on 3 hosts (object)
 ===============================================================================
 [2020-01-14 12:55:30] Checking ring md5sums
+-> http://10.0.0.1:6000/recon/ringmd5: <urlopen error timed out>
 -> http://10.0.0.2:6000/recon/ringmd5: <urlopen error timed out>
-1/2 hosts matched, 1 error[s] while checking hosts.
+1/3 hosts matched, 2 error[s] while checking hosts.
 ===============================================================================
 [2020-01-14 12:55:35] Checking swift.conf md5sum
+-> http://10.0.0.1:6000/recon/swiftconfmd5: <urlopen error timed out>
 -> http://10.0.0.2:6000/recon/swiftconfmd5: <urlopen error timed out>
-1/2 hosts matched, 1 error[s] while checking hosts.
+1/3 hosts matched, 2 error[s] while checking hosts.
 ===============================================================================`)
 
 var containerUpdaterVerboseData = []byte(`===============================================================================
