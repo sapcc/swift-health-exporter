@@ -65,7 +65,7 @@ for `swift-health-exporter`.
 | `swift_dispersion_object_copies_found`       |             |
 | `swift_dispersion_object_copies_missing`     |             |
 | `swift_dispersion_object_overlapping`        |             |
-| `swift_dispersion_exit_code`                 | `query`     |
+| `swift_dispersion_task_exit_code`            | `query`     |
 
 ### Recon
 
@@ -93,4 +93,4 @@ for `swift-health-exporter`.
 | `swift_cluster_storage_used_bytes`              |                      |
 | `swift_cluster_storage_used_percent_by_disk`    | `storage_ip`, `disk` |
 | `swift_cluster_storage_used_percent`            |                      |
-| `swift_recon_exit_code`                         | `query`              |
+| `swift_recon_task_exit_code`                    | `query`              |
