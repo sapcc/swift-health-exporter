@@ -215,7 +215,9 @@ func newReconMD5Task(pathToReconExecutable string) collectorTask {
 	return &reconMD5Task{
 		pathToReconExecutable: pathToReconExecutable,
 		md5OutputRx: regexp.MustCompile(
-			`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sum(?:s)?\s*([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`),
+			// Match group ref:
+			//  <1: kind> <2: output in case of error> <3: matched hosts> <4: total hosts> <5: errors>
+			`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:->\s\S*\s.*\s*)*)?([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`),
 		all: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_md5_all",
 				"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.",
@@ -274,12 +276,15 @@ func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTyped
 	}
 
 	for _, match := range matchList {
+		if len(match[2]) > 0 {
+			exitCode = 1
+		}
 		var totalHosts, errsEncountered float64
-		matchedHosts, err := strconv.ParseFloat(string(match[2]), 64)
+		matchedHosts, err := strconv.ParseFloat(string(match[3]), 64)
 		if err == nil {
-			totalHosts, err = strconv.ParseFloat(string(match[3]), 64)
+			totalHosts, err = strconv.ParseFloat(string(match[4]), 64)
 			if err == nil {
-				errsEncountered, err = strconv.ParseFloat(string(match[4]), 64)
+				errsEncountered, err = strconv.ParseFloat(string(match[5]), 64)
 				if err == nil {
 					kind := strings.ReplaceAll(string(match[1]), ".", "")
 					notMatchedHosts := totalHosts - matchedHosts
