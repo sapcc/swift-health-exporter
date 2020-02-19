@@ -85,7 +85,6 @@ func (c *ReconCollector) Collect(ch chan<- prometheus.Metric) {
 // reconDiskUsageTask implements the collector.collectorTask interface.
 type reconDiskUsageTask struct {
 	pathToReconExecutable string
-	specialCharRx         *regexp.Regexp
 
 	capacityBytes         typedDesc
 	freeBytes             typedDesc
@@ -94,10 +93,11 @@ type reconDiskUsageTask struct {
 	fractionalUsageByDisk typedDesc
 }
 
+var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+
 func newReconDiskUsageTask(pathToReconExecutable string) collectorTask {
 	return &reconDiskUsageTask{
 		pathToReconExecutable: pathToReconExecutable,
-		specialCharRx:         regexp.MustCompile(`[^a-zA-Z0-9]+`),
 		capacityBytes: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_storage_capacity_bytes",
 				"Capacity storage bytes as reported by the swift-recon tool.",
@@ -177,7 +177,7 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 
 				// submit metrics by disk (only fractional usage, which is the
 				// most useful for alerting)
-				device := t.specialCharRx.ReplaceAllLiteralString(disk.Device, "")
+				device := specialCharRx.ReplaceAllLiteralString(disk.Device, "")
 				diskUsageRatio := float64(disk.Used) / float64(disk.Size)
 				ch <- t.fractionalUsageByDisk.mustNewConstMetric(diskUsageRatio, hostname, device)
 			}
@@ -203,7 +203,6 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 // reconMD5Task implements the collector.collectorTask interface.
 type reconMD5Task struct {
 	pathToReconExecutable string
-	md5OutputRx           *regexp.Regexp
 
 	all        typedDesc
 	errors     typedDesc
@@ -211,13 +210,14 @@ type reconMD5Task struct {
 	notMatched typedDesc
 }
 
+// Match group ref:
+//  <1: kind> <2: output in case of error> <3: matched hosts> <4: total hosts> <5: errors>
+var md5OutputRx = regexp.MustCompile(
+	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:->\s\S*\s.*\s*)*)?([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`)
+
 func newReconMD5Task(pathToReconExecutable string) collectorTask {
 	return &reconMD5Task{
 		pathToReconExecutable: pathToReconExecutable,
-		md5OutputRx: regexp.MustCompile(
-			// Match group ref:
-			//  <1: kind> <2: output in case of error> <3: matched hosts> <4: total hosts> <5: errors>
-			`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:->\s\S*\s.*\s*)*)?([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`),
 		all: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_md5_all",
 				"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.",
@@ -264,7 +264,7 @@ func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTyped
 	var matchList [][][]byte
 	out, err := runCommandWithTimeout(4*time.Second, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
-		matchList = t.md5OutputRx.FindAllSubmatch(out, -1)
+		matchList = md5OutputRx.FindAllSubmatch(out, -1)
 		if len(matchList) == 0 {
 			err = errors.New("command did not return any usable output")
 		}
