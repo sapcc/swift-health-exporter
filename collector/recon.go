@@ -33,11 +33,45 @@ import (
 type ReconCollector struct {
 	taskExitCode typedDesc
 	tasks        []collectorTask
-	isTest       bool
+}
+
+// ReconCollectorOpts contains options that define the recon collector's behavior.
+type ReconCollectorOpts struct {
+	IsTest               bool
+	WithDiskUsage        bool
+	WithDriveAudit       bool
+	WithMD5              bool
+	WithQuarantined      bool
+	WithReplication      bool
+	WithUnmounted        bool
+	WithUpdaterSweepTime bool
 }
 
 // NewReconCollector creates a new ReconCollector.
-func NewReconCollector(pathToExecutable string, isTest bool) *ReconCollector {
+func NewReconCollector(pathToExecutable string, opts ReconCollectorOpts) *ReconCollector {
+	var tasks []collectorTask
+	if opts.WithDiskUsage {
+		tasks = append(tasks, newReconDiskUsageTask(pathToExecutable))
+	}
+	if opts.WithDriveAudit {
+		tasks = append(tasks, newReconDriveAuditTask(pathToExecutable))
+	}
+	if opts.WithMD5 {
+		tasks = append(tasks, newReconMD5Task(pathToExecutable))
+	}
+	if opts.WithQuarantined {
+		tasks = append(tasks, newReconQuarantinedTask(pathToExecutable))
+	}
+	if opts.WithReplication {
+		tasks = append(tasks, newReconReplicationTask(pathToExecutable, opts.IsTest))
+	}
+	if opts.WithUnmounted {
+		tasks = append(tasks, newReconUnmountedTask(pathToExecutable))
+	}
+	if opts.WithUpdaterSweepTime {
+		tasks = append(tasks, newReconUpdaterSweepTask(pathToExecutable))
+	}
+
 	return &ReconCollector{
 		taskExitCode: typedDesc{
 			desc: prometheus.NewDesc("swift_recon_task_exit_code",
@@ -45,15 +79,7 @@ func NewReconCollector(pathToExecutable string, isTest bool) *ReconCollector {
 				[]string{"query"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
-		tasks: []collectorTask{
-			newReconDiskUsageTask(pathToExecutable),
-			newReconDriveAuditTask(pathToExecutable),
-			newReconMD5Task(pathToExecutable),
-			newReconQuarantinedTask(pathToExecutable),
-			newReconReplicationTask(pathToExecutable, isTest),
-			newReconUnmountedTask(pathToExecutable),
-			newReconUpdaterSweepTask(pathToExecutable),
-		},
+		tasks: tasks,
 	}
 }
 

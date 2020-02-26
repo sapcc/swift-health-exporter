@@ -30,7 +30,16 @@ func TestReconCollector(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable, true))
+	registry.MustRegister(NewReconCollector(pathToExecutable, ReconCollectorOpts{
+		IsTest:               true,
+		WithDiskUsage:        true,
+		WithDriveAudit:       true,
+		WithMD5:              true,
+		WithQuarantined:      true,
+		WithReplication:      true,
+		WithUnmounted:        true,
+		WithUpdaterSweepTime: true,
+	}))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -46,7 +55,16 @@ func TestReconCollectorWithErrors(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewReconCollector(pathToExecutable, true))
+	registry.MustRegister(NewReconCollector(pathToExecutable, ReconCollectorOpts{
+		IsTest:               true,
+		WithDiskUsage:        true,
+		WithDriveAudit:       true,
+		WithMD5:              true,
+		WithQuarantined:      true,
+		WithReplication:      true,
+		WithUnmounted:        true,
+		WithUpdaterSweepTime: true,
+	}))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

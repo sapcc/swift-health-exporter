@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"strconv"
 
+	"github.com/alecthomas/kingpin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
@@ -30,11 +31,43 @@ import (
 
 func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
-	swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
-	swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 
-	prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath))
-	prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, false))
+	noReconMD5Collector := kingpin.Flag("no-collector.recon.md5", "Disable MD5 collector.").Bool()
+	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
+	reconDiskUsageCollector := kingpin.Flag("collector.recon.diskusage", "Enable disk usage collector.").Bool()
+	reconDriveAuditCollector := kingpin.Flag("collector.recon.driveaudit", "Enable drive audit collector.").Bool()
+	reconQuarantinedCollector := kingpin.Flag("collector.recon.quarantined", "Enable quarantined collector.").Bool()
+	reconReplicationCollector := kingpin.Flag("collector.recon.replication", "Enable replication collector.").Bool()
+	reconUnmountedCollector := kingpin.Flag("collector.recon.unmounted", "Enable unmounted collector.").Bool()
+	reconUpdaterSweepTimeCollector := kingpin.Flag("collector.recon.updater_sweep_time", "Enable updater sweep time collector.").Bool()
+
+	kingpin.Parse()
+
+	reconCollector := *reconDiskUsageCollector || *reconDriveAuditCollector || !(*noReconMD5Collector) ||
+		*reconQuarantinedCollector || *reconReplicationCollector || *reconUnmountedCollector || *reconUpdaterSweepTimeCollector
+
+	if !reconCollector && !(*dispersionCollector) {
+		logg.Fatal("no collector enabled")
+	}
+
+	if *dispersionCollector {
+		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath))
+	}
+
+	if reconCollector {
+		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
+		prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, collector.ReconCollectorOpts{
+			IsTest:               false,
+			WithDiskUsage:        *reconDiskUsageCollector,
+			WithDriveAudit:       *reconDriveAuditCollector,
+			WithMD5:              !(*noReconMD5Collector),
+			WithQuarantined:      *reconQuarantinedCollector,
+			WithReplication:      *reconReplicationCollector,
+			WithUnmounted:        *reconUnmountedCollector,
+			WithUpdaterSweepTime: *reconUpdaterSweepTimeCollector,
+		}))
+	}
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
