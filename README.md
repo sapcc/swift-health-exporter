@@ -33,6 +33,10 @@ To start collecting metrics, you simply need to:
 swift-health-exporter
 ```
 
+Metric are exposed at port `9520`. This port has been
+[allocated](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
+for `swift-health-exporter`.
+
 If the `swift-recon` and `swift-dispersion-report` are not in the directories
 named by the `$PATH` then you **must** provide the respective paths to
 these executables using the configuration options.
@@ -41,56 +45,105 @@ these executables using the configuration options.
 
 The following environment variables are recognized:
 
-| Variable                       | Required                          | Description                                                                               |
-| ----------------               | ----------------                  | ----------------                                                                          |
-| `SWIFT_DISPERSION_REPORT_PATH` | yes, if executable not in `$PATH` | Path to the `swift-dispersion-report` executable.                                         |
-| `SWIFT_RECON_PATH`             | yes, if executable not in `$PATH` | Path to the `swift-recon` executable.                                                     |
-| `DEBUG`                        | no                                | If this option is set to `true` then `swift-health-exporter` will also output debug logs. |
+| Variable                       | Required                                                                      | Description                                                                               |
+| ----------------               | ----------------                                                              | ----------------                                                                          |
+| `SWIFT_DISPERSION_REPORT_PATH` | yes, if executable not in `$PATH` and `dispersion` collector is enabled       | Path to the `swift-dispersion-report` executable.                                         |
+| `SWIFT_RECON_PATH`             | yes, if executable not in `$PATH` and any `recon.<name>` collector is enabled | Path to the `swift-recon` executable.                                                     |
+| `DEBUG`                        | no                                                                            | If this option is set to `true` then `swift-health-exporter` will also output debug logs. |
+
+## Collectors
+
+Collectors are enabled by providing a `--collector.<name>` flag. Collectors
+that are enabled by default can be disabled by providing a
+`--no-collector.<name>` flag.
+
+| Name                       | Enabled by default |
+| -------                    | -------            |
+| `dispersion`               | no                 |
+| `recon.diskusage`          | no                 |
+| `recon.driveaudit`         | no                 |
+| `recon.md5`                | yes                |
+| `recon.quarantined`        | no                 |
+| `recon.replication`        | no                 |
+| `recon.unmounted`          | no                 |
+| `recon.updater_sweep_time` | no                 |
 
 ## Metrics
 
-Metric are exposed at port `9520`. This port has been
-[allocated](https://github.com/prometheus/prometheus/wiki/Default-port-allocations)
-for `swift-health-exporter`.
+### dispersion
 
-### Dispersion Report
+| Metric                                       | Labels  |
+| -------                                      | ------- |
+| `swift_dispersion_container_copies_expected` |         |
+| `swift_dispersion_container_copies_found`    |         |
+| `swift_dispersion_container_copies_missing`  |         |
+| `swift_dispersion_container_overlapping`     |         |
+| `swift_dispersion_object_copies_expected`    |         |
+| `swift_dispersion_object_copies_found`       |         |
+| `swift_dispersion_object_copies_missing`     |         |
+| `swift_dispersion_object_overlapping`        |         |
+| `swift_dispersion_task_exit_code`            | `query` |
 
-| Metric                                       | Labels      |
-| ----------------                             | ----------- |
-| `swift_dispersion_container_copies_expected` |             |
-| `swift_dispersion_container_copies_found`    |             |
-| `swift_dispersion_container_copies_missing`  |             |
-| `swift_dispersion_container_overlapping`     |             |
-| `swift_dispersion_object_copies_expected`    |             |
-| `swift_dispersion_object_copies_found`       |             |
-| `swift_dispersion_object_copies_missing`     |             |
-| `swift_dispersion_object_overlapping`        |             |
-| `swift_dispersion_task_exit_code`            | `query`     |
+### recon
 
-### Recon
+| Metric                       | Labels  |
+| -------                      | ------- |
+| `swift_recon_task_exit_code` | `query` |
 
-| Metric                                          | Labels               |
-| ----------------                                | -----------          |
-| `swift_cluster_accounts_quarantined`            | `storage_ip`         |
-| `swift_cluster_accounts_replication_age`        | `storage_ip`         |
-| `swift_cluster_accounts_replication_duration`   | `storage_ip`         |
-| `swift_cluster_containers_quarantined`          | `storage_ip`         |
-| `swift_cluster_containers_replication_age`      | `storage_ip`         |
-| `swift_cluster_containers_replication_duration` | `storage_ip`         |
-| `swift_cluster_containers_updater_sweep_time`   | `storage_ip`         |
-| `swift_cluster_drives_audit_errors`             | `storage_ip`         |
-| `swift_cluster_drives_unmounted`                | `storage_ip`         |
-| `swift_cluster_md5_all`                         | `kind`               |
-| `swift_cluster_md5_errors`                      | `kind`               |
-| `swift_cluster_md5_matched`                     | `kind`               |
-| `swift_cluster_md5_not_matched`                 | `kind`               |
-| `swift_cluster_objects_quarantined`             | `storage_ip`         |
-| `swift_cluster_objects_replication_age`         | `storage_ip`         |
-| `swift_cluster_objects_replication_duration`    | `storage_ip`         |
-| `swift_cluster_objects_updater_sweep_time`      | `storage_ip`         |
-| `swift_cluster_storage_capacity_bytes`          |                      |
-| `swift_cluster_storage_free_bytes`              |                      |
-| `swift_cluster_storage_used_bytes`              |                      |
-| `swift_cluster_storage_used_percent_by_disk`    | `storage_ip`, `disk` |
-| `swift_cluster_storage_used_percent`            |                      |
-| `swift_recon_task_exit_code`                    | `query`              |
+
+#### recon.diskusage
+
+| Metric                                       | Labels               |
+| ----------------                             | -----------          |
+| `swift_cluster_storage_capacity_bytes`       |                      |
+| `swift_cluster_storage_free_bytes`           |                      |
+| `swift_cluster_storage_used_bytes`           |                      |
+| `swift_cluster_storage_used_percent_by_disk` | `storage_ip`, `disk` |
+| `swift_cluster_storage_used_percent`         |                      |
+
+#### recon.driveaudit
+
+| Metric                              | Labels       |
+| -------                             | -------      |
+| `swift_cluster_drives_audit_errors` | `storage_ip` |
+
+#### recon.md5
+
+| Metric                          | Labels  |
+| -------                         | ------- |
+| `swift_cluster_md5_all`         | `kind`  |
+| `swift_cluster_md5_errors`      | `kind`  |
+| `swift_cluster_md5_matched`     | `kind`  |
+| `swift_cluster_md5_not_matched` | `kind`  |
+
+#### recon.quarantined
+
+| Metric                                 | Labels       |
+| -------                                | -------      |
+| `swift_cluster_accounts_quarantined`   | `storage_ip` |
+| `swift_cluster_containers_quarantined` | `storage_ip` |
+| `swift_cluster_objects_quarantined`    | `storage_ip` |
+
+#### recon.replication
+
+| Metric                                          | Labels       |
+| -------                                         | -------      |
+| `swift_cluster_accounts_replication_age`        | `storage_ip` |
+| `swift_cluster_accounts_replication_duration`   | `storage_ip` |
+| `swift_cluster_containers_replication_age`      | `storage_ip` |
+| `swift_cluster_containers_replication_duration` | `storage_ip` |
+| `swift_cluster_objects_replication_age`         | `storage_ip` |
+| `swift_cluster_objects_replication_duration`    | `storage_ip` |
+
+#### recon.unmounted
+
+| Metric                           | Labels       |
+| -------                          | -------      |
+| `swift_cluster_drives_unmounted` | `storage_ip` |
+
+#### recon.updater_sweep_time
+
+| Metric                                        | Labels       |
+| -------                                       | -------      |
+| `swift_cluster_containers_updater_sweep_time` | `storage_ip` |
+| `swift_cluster_objects_updater_sweep_time`    | `storage_ip` |
