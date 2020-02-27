@@ -288,7 +288,7 @@ func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTyped
 	}()
 
 	var matchList [][][]byte
-	out, err := runCommandWithTimeout(4*time.Second, t.pathToReconExecutable, cmdArgs...)
+	out, err := runCommandWithTimeout(20*time.Second, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		matchList = md5OutputRx.FindAllSubmatch(out, -1)
 		if len(matchList) == 0 {
