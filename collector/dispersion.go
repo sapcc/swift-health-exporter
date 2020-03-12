@@ -24,12 +24,13 @@ import (
 
 // DispersionCollector implements the prometheus.Collector interface.
 type DispersionCollector struct {
+	ctxTimeout               time.Duration
 	taskExitCode             typedDesc
 	dispersionReportDumpTask collectorTask
 }
 
 // NewDispersionCollector creates a new DispersionCollector.
-func NewDispersionCollector(pathToExecutable string) *DispersionCollector {
+func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration) *DispersionCollector {
 	return &DispersionCollector{
 		taskExitCode: typedDesc{
 			desc: prometheus.NewDesc(
@@ -38,7 +39,7 @@ func NewDispersionCollector(pathToExecutable string) *DispersionCollector {
 				[]string{"query"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
-		dispersionReportDumpTask: newDispersionReportDumpTask(pathToExecutable),
+		dispersionReportDumpTask: newDispersionReportDumpTask(pathToExecutable, ctxTimeout),
 	}
 }
 
@@ -58,6 +59,7 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 
 // dispersionReportDumpTask implements the collector.collectorTask interface.
 type dispersionReportDumpTask struct {
+	ctxTimeout                 time.Duration
 	pathToDispersionExecutable string
 
 	containerCopiesExpected typedDesc
@@ -70,8 +72,9 @@ type dispersionReportDumpTask struct {
 	objectOverlapping       typedDesc
 }
 
-func newDispersionReportDumpTask(pathToDispersionExecutable string) collectorTask {
+func newDispersionReportDumpTask(pathToDispersionExecutable string, ctxTimeout time.Duration) collectorTask {
 	return &dispersionReportDumpTask{
+		ctxTimeout:                 ctxTimeout,
 		pathToDispersionExecutable: pathToDispersionExecutable,
 		containerCopiesExpected: typedDesc{
 			desc: prometheus.NewDesc(
@@ -149,7 +152,7 @@ func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, e
 	exitCode := 0
 	cmdArg := "--dump-json"
 	// in large Swift clusters, the dispersion-report tool takes time. Hence the longer timeout.
-	out, err := runCommandWithTimeout(20*time.Second, t.pathToDispersionExecutable, cmdArg)
+	out, err := runCommandWithTimeout(t.ctxTimeout, t.pathToDispersionExecutable, cmdArg)
 	if err == nil {
 		var data struct {
 			Object struct {

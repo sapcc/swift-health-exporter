@@ -68,6 +68,10 @@ that are enabled by default can be disabled by providing a
 | `recon.unmounted`          | no                 |
 | `recon.updater_sweep_time` | no                 |
 
+Optionally host timeout for recon collector and context timeout for both
+collectors can be provided using the respective flags. Use `--help` for usage
+info and default timeout values.
+
 ## Metrics
 
 ### dispersion

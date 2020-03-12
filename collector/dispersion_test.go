@@ -17,6 +17,7 @@ package collector
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,7 +31,7 @@ func TestDispersionCollector(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewDispersionCollector(pathToExecutable))
+	registry.MustRegister(NewDispersionCollector(pathToExecutable, 20*time.Second))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -46,7 +47,7 @@ func TestDispersionCollectorWithErrors(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewDispersionCollector(pathToExecutable))
+	registry.MustRegister(NewDispersionCollector(pathToExecutable, 20*time.Second))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

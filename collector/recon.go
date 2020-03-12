@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,31 +46,33 @@ type ReconCollectorOpts struct {
 	WithReplication      bool
 	WithUnmounted        bool
 	WithUpdaterSweepTime bool
+	HostTimeout          int
+	CtxTimeout           time.Duration
 }
 
 // NewReconCollector creates a new ReconCollector.
 func NewReconCollector(pathToExecutable string, opts ReconCollectorOpts) *ReconCollector {
 	var tasks []collectorTask
 	if opts.WithDiskUsage {
-		tasks = append(tasks, newReconDiskUsageTask(pathToExecutable))
+		tasks = append(tasks, newReconDiskUsageTask(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithDriveAudit {
-		tasks = append(tasks, newReconDriveAuditTask(pathToExecutable))
+		tasks = append(tasks, newReconDriveAuditTask(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithMD5 {
-		tasks = append(tasks, newReconMD5Task(pathToExecutable))
+		tasks = append(tasks, newReconMD5Task(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithQuarantined {
-		tasks = append(tasks, newReconQuarantinedTask(pathToExecutable))
+		tasks = append(tasks, newReconQuarantinedTask(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithReplication {
-		tasks = append(tasks, newReconReplicationTask(pathToExecutable, opts.IsTest))
+		tasks = append(tasks, newReconReplicationTask(pathToExecutable, opts.IsTest, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithUnmounted {
-		tasks = append(tasks, newReconUnmountedTask(pathToExecutable))
+		tasks = append(tasks, newReconUnmountedTask(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 	if opts.WithUpdaterSweepTime {
-		tasks = append(tasks, newReconUpdaterSweepTask(pathToExecutable))
+		tasks = append(tasks, newReconUpdaterSweepTask(pathToExecutable, opts.HostTimeout, opts.CtxTimeout))
 	}
 
 	return &ReconCollector{
@@ -111,6 +114,8 @@ func (c *ReconCollector) Collect(ch chan<- prometheus.Metric) {
 // reconDiskUsageTask implements the collector.collectorTask interface.
 type reconDiskUsageTask struct {
 	pathToReconExecutable string
+	hostTimeout           int
+	ctxTimeout            time.Duration
 
 	capacityBytes         typedDesc
 	freeBytes             typedDesc
@@ -121,8 +126,10 @@ type reconDiskUsageTask struct {
 
 var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
 
-func newReconDiskUsageTask(pathToReconExecutable string) collectorTask {
+func newReconDiskUsageTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconDiskUsageTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		capacityBytes: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_storage_capacity_bytes",
@@ -173,8 +180,8 @@ func (t *reconDiskUsageTask) describeMetrics(ch chan<- *prometheus.Desc) {
 // reconDiskUsageTask implements the collector.collectorTask interface.
 func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
-	cmdArgs := []string{"--timeout=1", "--diskusage", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--diskusage", "--verbose"}
+	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		var totalFree, totalUsed, totalSize int64
 		for hostname, dataBytes := range outputPerHost {
@@ -229,6 +236,8 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 // reconMD5Task implements the collector.collectorTask interface.
 type reconMD5Task struct {
 	pathToReconExecutable string
+	hostTimeout           int
+	ctxTimeout            time.Duration
 
 	all        typedDesc
 	errors     typedDesc
@@ -241,8 +250,10 @@ type reconMD5Task struct {
 var md5OutputRx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:->\s\S*\s.*\s*)*)?([0-9]+)/([0-9]+) hosts matched, ([0-9]+) error.*$`)
 
-func newReconMD5Task(pathToReconExecutable string) collectorTask {
+func newReconMD5Task(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconMD5Task{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		all: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_md5_all",
@@ -282,13 +293,13 @@ func (t *reconMD5Task) describeMetrics(ch chan<- *prometheus.Desc) {
 // reconMD5Task implements the collector.collectorTask interface.
 func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
-	cmdArgs := []string{"--timeout=1", "--md5"}
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--md5"}
 	defer func() {
 		ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
 	}()
 
 	var matchList [][][]byte
-	out, err := runCommandWithTimeout(20*time.Second, t.pathToReconExecutable, cmdArgs...)
+	out, err := runCommandWithTimeout(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		matchList = md5OutputRx.FindAllSubmatch(out, -1)
 		if len(matchList) == 0 {
@@ -333,13 +344,17 @@ func (t *reconMD5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTyped
 // reconUpdaterSweepTask implements the collector.collectorTask interface.
 type reconUpdaterSweepTask struct {
 	pathToReconExecutable string
+	hostTimeout           int
+	ctxTimeout            time.Duration
 
 	containerTime typedDesc
 	objectTime    typedDesc
 }
 
-func newReconUpdaterSweepTask(pathToReconExecutable string) collectorTask {
+func newReconUpdaterSweepTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconUpdaterSweepTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		containerTime: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_containers_updater_sweep_time",
@@ -367,8 +382,8 @@ func (t *reconUpdaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exit
 	serverTypes := []string{"container", "object"}
 	for _, server := range serverTypes {
 		exitCode := 0
-		cmdArgs := []string{"--timeout=1", server, "--updater", "--verbose"}
-		outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+		cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), server, "--updater", "--verbose"}
+		outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 		if err == nil {
 			for hostname, dataBytes := range outputPerHost {
 				var data struct {
@@ -402,8 +417,10 @@ func (t *reconUpdaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exit
 
 // reconReplicationTask implements the collector.collectorTask interface.
 type reconReplicationTask struct {
-	pathToReconExecutable string
 	isTest                bool
+	pathToReconExecutable string
+	hostTimeout           int
+	ctxTimeout            time.Duration
 
 	accountReplicationAge        typedDesc
 	accountReplicationDuration   typedDesc
@@ -413,8 +430,10 @@ type reconReplicationTask struct {
 	objectReplicationDuration    typedDesc
 }
 
-func newReconReplicationTask(pathToReconExecutable string, isTest bool) collectorTask {
+func newReconReplicationTask(pathToReconExecutable string, isTest bool, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconReplicationTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		isTest:                isTest,
 		accountReplicationAge: typedDesc{
@@ -471,7 +490,7 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 	serverTypes := []string{"account", "container", "object"}
 	for _, server := range serverTypes {
 		exitCode := 0
-		cmdArgs := []string{"--timeout=1", server, "--replication", "--verbose"}
+		cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), server, "--replication", "--verbose"}
 
 		var ageTypedDesc, durTypedDesc typedDesc
 		switch server {
@@ -487,7 +506,7 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 		}
 
 		currentTime := float64(time.Now().Unix())
-		outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+		outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 		if err == nil {
 			for hostname, dataBytes := range outputPerHost {
 				var data struct {
@@ -522,14 +541,18 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 // reconQuarantinedTask implements the collector.collectorTask interface.
 type reconQuarantinedTask struct {
 	pathToReconExecutable string
+	hostTimeout           int
+	ctxTimeout            time.Duration
 
 	accounts   typedDesc
 	containers typedDesc
 	objects    typedDesc
 }
 
-func newReconQuarantinedTask(pathToReconExecutable string) collectorTask {
+func newReconQuarantinedTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconQuarantinedTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		accounts: typedDesc{
 			desc: prometheus.NewDesc("swift_cluster_accounts_quarantined",
@@ -562,8 +585,8 @@ func (t *reconQuarantinedTask) describeMetrics(ch chan<- *prometheus.Desc) {
 // reconQuarantinedTask implements the collector.collectorTask interface.
 func (t *reconQuarantinedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
-	cmdArgs := []string{"--timeout=1", "--quarantined", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--quarantined", "--verbose"}
+	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		for hostname, dataBytes := range outputPerHost {
 			var data struct {
@@ -593,11 +616,16 @@ func (t *reconQuarantinedTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 // reconUnmountedTask implements the collector.collectorTask interface.
 type reconUnmountedTask struct {
 	pathToReconExecutable string
-	unmountedDrives       typedDesc
+	hostTimeout           int
+	ctxTimeout            time.Duration
+
+	unmountedDrives typedDesc
 }
 
-func newReconUnmountedTask(pathToReconExecutable string) collectorTask {
+func newReconUnmountedTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconUnmountedTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		unmountedDrives: typedDesc{
 			desc: prometheus.NewDesc(
@@ -617,8 +645,8 @@ func (t *reconUnmountedTask) describeMetrics(ch chan<- *prometheus.Desc) {
 // reconUnmountedTask implements the collector.collectorTask interface.
 func (t *reconUnmountedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
-	cmdArgs := []string{"--timeout=1", "--unmounted", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--unmounted", "--verbose"}
+	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		for hostname, dataBytes := range outputPerHost {
 			var disksData []struct {
@@ -644,11 +672,16 @@ func (t *reconUnmountedTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 // reconDriveAuditTask implements the collector.collectorTask interface.
 type reconDriveAuditTask struct {
 	pathToReconExecutable string
-	auditErrors           typedDesc
+	hostTimeout           int
+	ctxTimeout            time.Duration
+
+	auditErrors typedDesc
 }
 
-func newReconDriveAuditTask(pathToReconExecutable string) collectorTask {
+func newReconDriveAuditTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) collectorTask {
 	return &reconDriveAuditTask{
+		hostTimeout:           hostTimeout,
+		ctxTimeout:            ctxTimeout,
 		pathToReconExecutable: pathToReconExecutable,
 		auditErrors: typedDesc{
 			desc: prometheus.NewDesc(
@@ -668,8 +701,8 @@ func (t *reconDriveAuditTask) describeMetrics(ch chan<- *prometheus.Desc) {
 // reconDriveAuditTask implements the collector.collectorTask interface.
 func (t *reconDriveAuditTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
-	cmdArgs := []string{"--timeout=1", "--driveaudit", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.pathToReconExecutable, cmdArgs...)
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--driveaudit", "--verbose"}
+	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
 		for hostname, dataBytes := range outputPerHost {
 			var data struct {
@@ -697,8 +730,8 @@ func (t *reconDriveAuditTask) collectMetrics(ch chan<- prometheus.Metric, exitCo
 
 var reconHostOutputRx = regexp.MustCompile(`(?m)^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
 
-func getSwiftReconOutputPerHost(pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	out, err := runCommandWithTimeout(4*time.Second, pathToExecutable, cmdArgs...)
+func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
+	out, err := runCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
 	if err != nil {
 		return nil, err
 	}

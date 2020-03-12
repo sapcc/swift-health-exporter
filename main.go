@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,8 +33,11 @@ import (
 func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
-	noReconMD5Collector := kingpin.Flag("no-collector.recon.md5", "Disable MD5 collector.").Bool()
+	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
+	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
+	reconHostTimeout := kingpin.Flag("recon.timeout-host", "The swift-recon host timeout value (in seconds).").Default("1").Int()
+	noReconMD5Collector := kingpin.Flag("no-collector.recon.md5", "Disable MD5 collector.").Bool()
 	reconDiskUsageCollector := kingpin.Flag("collector.recon.diskusage", "Enable disk usage collector.").Bool()
 	reconDriveAuditCollector := kingpin.Flag("collector.recon.driveaudit", "Enable drive audit collector.").Bool()
 	reconQuarantinedCollector := kingpin.Flag("collector.recon.quarantined", "Enable quarantined collector.").Bool()
@@ -52,11 +56,13 @@ func main() {
 
 	if *dispersionCollector {
 		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
-		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath))
+		t := time.Duration(*dispersionTimeout) * time.Second
+		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t))
 	}
 
 	if reconCollector {
 		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
+		t := time.Duration(*reconTimeout) * time.Second
 		prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, collector.ReconCollectorOpts{
 			IsTest:               false,
 			WithDiskUsage:        *reconDiskUsageCollector,
@@ -66,6 +72,8 @@ func main() {
 			WithReplication:      *reconReplicationCollector,
 			WithUnmounted:        *reconUnmountedCollector,
 			WithUpdaterSweepTime: *reconUpdaterSweepTimeCollector,
+			HostTimeout:          *reconHostTimeout,
+			CtxTimeout:           t,
 		}))
 	}
 

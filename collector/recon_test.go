@@ -17,6 +17,7 @@ package collector
 import (
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -39,6 +40,8 @@ func TestReconCollector(t *testing.T) {
 		WithReplication:      true,
 		WithUnmounted:        true,
 		WithUpdaterSweepTime: true,
+		HostTimeout:          1,
+		CtxTimeout:           4 * time.Second,
 	}))
 	assert.HTTPRequest{
 		Method:       "GET",
@@ -64,6 +67,8 @@ func TestReconCollectorWithErrors(t *testing.T) {
 		WithReplication:      true,
 		WithUnmounted:        true,
 		WithUpdaterSweepTime: true,
+		HostTimeout:          1,
+		CtxTimeout:           4 * time.Second,
 	}))
 	assert.HTTPRequest{
 		Method:       "GET",
