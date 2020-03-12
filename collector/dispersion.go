@@ -16,6 +16,7 @@ package collector
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -169,7 +170,9 @@ func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, e
 			} `json:"container"`
 		}
 		err = json.Unmarshal(out, &data)
-		if err == nil {
+		if err != nil {
+			err = fmt.Errorf("%s: output follows:\n%s", err.Error(), string(out))
+		} else {
 			cntr := data.Container
 			if cntr.Expected > 0 && cntr.Found > 0 {
 				cntr.Missing = cntr.Expected - cntr.Found
