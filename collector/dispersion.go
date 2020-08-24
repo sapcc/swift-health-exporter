@@ -17,6 +17,7 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -148,6 +149,11 @@ func (t *dispersionReportDumpTask) describeMetrics(ch chan<- *prometheus.Desc) {
 	t.objectOverlapping.describe(ch)
 }
 
+// This will catch unmounted errors.
+// E.g.:
+//   ERROR: 10.0.0.1:6000/swift-09 is unmounted -- This will cause...
+var dispersionReportUnmountedErrRx = regexp.MustCompile(`(?m)^ERROR:\s*\d+\.\d+\.\d+\.\d+:\d+\/[a-zA-Z0-9-]+\s*is\s*unmounted.*$`)
+
 // dispersionReportDumpTask implements the collector.collectorTask interface.
 func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
 	exitCode := 0
@@ -155,6 +161,8 @@ func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, e
 	// in large Swift clusters, the dispersion-report tool takes time. Hence the longer timeout.
 	out, err := runCommandWithTimeout(t.ctxTimeout, t.pathToDispersionExecutable, cmdArg)
 	if err == nil {
+		// Get rid of unmounted errors.
+		out = dispersionReportUnmountedErrRx.ReplaceAll(out, []byte{})
 		var data struct {
 			Object struct {
 				Expected    int64 `json:"copies_expected"`
