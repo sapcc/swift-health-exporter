@@ -22,7 +22,7 @@ check: FORCE all static-check build/cover.html
 	@printf "\e[1;32m>> All tests successful.\e[0m\n"
 
 static-check: FORCE
-	@if ! hash golint 2>/dev/null; then printf "\e[1;36m>> Installing golint...\e[0m\n"; go get -u golang.org/x/lint/golint; fi
+	@if ! hash golint 2>/dev/null; then printf "\e[1;36m>> Installing golint...\e[0m\n"; GO111MODULE=off go get -u golang.org/x/lint/golint; fi
 	@printf "\e[1;36m>> gofmt\e[0m\n"
 	@if s="$$(gofmt -s -l *.go cmd pkg 2>/dev/null)" && test -n "$$s"; then printf ' => %s\n%s\n' gofmt  "$$s"; false; fi
 	@printf "\e[1;36m>> golint\e[0m\n"

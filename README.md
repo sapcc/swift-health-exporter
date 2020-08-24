@@ -1,7 +1,7 @@
 # Swift health exporter
 
-[![Build Status](https://travis-ci.org/sapcc/swift-health-exporter.svg?branch=master)](https://travis-ci.org/sapcc/swift-health-exporter)
-[![Coverage Status](https://coveralls.io/repos/github/sapcc/swift-health-exporter/badge.svg?branch=master)](https://coveralls.io/github/sapcc/swift-health-exporter?branch=master)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sapcc/swift-health-exporter/Build%20and%20Test)](https://github.com/sapcc/swift-health-exporter/actions?query=workflow%3A%22Build+and+Test%22)
+[![Coverage Status](https://img.shields.io/coveralls/github/sapcc/swift-health-exporter)](https://coveralls.io/github/sapcc/swift-health-exporter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/swift-health-exporter)](https://goreportcard.com/report/github.com/sapcc/swift-health-exporter)
 
 This exporter uses the `swift-dispersion-report` and `swift-recon` tools to
