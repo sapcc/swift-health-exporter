@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/alecthomas/kingpin"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var reportData = []byte(

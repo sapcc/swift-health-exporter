@@ -18,7 +18,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alecthomas/kingpin"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var reportData = strings.Join([]string{
