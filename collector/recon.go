@@ -183,14 +183,14 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--diskusage", "--verbose"}
 	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
 	if err == nil {
-		var totalFree, totalUsed, totalSize int64
+		var totalFree, totalUsed, totalSize flexibleUint64
 		for hostname, dataBytes := range outputPerHost {
 			var disksData []struct {
-				Device  string `json:"device"`
-				Avail   int64  `json:"avail"`
-				Mounted bool   `json:"mounted"`
-				Used    int64  `json:"used"`
-				Size    int64  `json:"size"`
+				Device  string         `json:"device"`
+				Avail   flexibleUint64 `json:"avail"`
+				Mounted bool           `json:"mounted"`
+				Used    flexibleUint64 `json:"used"`
+				Size    flexibleUint64 `json:"size"`
 			}
 			err := json.Unmarshal(dataBytes, &disksData)
 			if err != nil {
