@@ -15,10 +15,12 @@
 package collector
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/assert"
@@ -42,7 +44,7 @@ func TestReconCollector(t *testing.T) {
 		WithUpdaterSweepTime: true,
 		HostTimeout:          1,
 		CtxTimeout:           4 * time.Second,
-	}))
+	}, log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -69,7 +71,7 @@ func TestReconCollectorWithErrors(t *testing.T) {
 		WithUpdaterSweepTime: true,
 		HostTimeout:          1,
 		CtxTimeout:           4 * time.Second,
-	}))
+	}, log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))))
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

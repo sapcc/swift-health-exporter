@@ -22,17 +22,16 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alecthomas/kingpin"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
-	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/swift-health-exporter/collector"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
-	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
-
 	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
 	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
@@ -44,26 +43,46 @@ func main() {
 	reconReplicationCollector := kingpin.Flag("collector.recon.replication", "Enable replication collector.").Bool()
 	reconUnmountedCollector := kingpin.Flag("collector.recon.unmounted", "Enable unmounted collector.").Bool()
 	reconUpdaterSweepTimeCollector := kingpin.Flag("collector.recon.updater_sweep_time", "Enable updater sweep time collector.").Bool()
-
 	kingpin.Parse()
+
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stdout))
+	showDebug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
+	if showDebug {
+		logger = level.NewFilter(logger, level.AllowDebug())
+	} else {
+		logger = level.NewFilter(logger, level.AllowInfo())
+	}
+	logger = log.With(logger,
+		"ts", log.DefaultTimestampUTC,
+		"caller", log.DefaultCaller,
+	)
 
 	reconCollector := *reconDiskUsageCollector || *reconDriveAuditCollector || !(*noReconMD5Collector) ||
 		*reconQuarantinedCollector || *reconReplicationCollector || *reconUnmountedCollector || *reconUpdaterSweepTimeCollector
 
 	if !reconCollector && !(*dispersionCollector) {
-		logg.Fatal("no collector enabled")
+		logger.Log("msg", "no collector enabled")
+		os.Exit(1)
 	}
 
 	if *dispersionCollector {
-		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+		path, err := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+		if err != nil {
+			level.Error(logger).Log("err", err.Error())
+			os.Exit(1)
+		}
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t))
+		c := collector.NewDispersionCollector(path, t, log.With(logger, "collector", "dispersion"))
+		prometheus.MustRegister(c)
 	}
 
 	if reconCollector {
-		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
-		t := time.Duration(*reconTimeout) * time.Second
-		prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, collector.ReconCollectorOpts{
+		path, err := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
+		if err != nil {
+			level.Error(logger).Log("err", err.Error())
+			os.Exit(1)
+		}
+		opts := collector.ReconCollectorOpts{
 			IsTest:               false,
 			WithDiskUsage:        *reconDiskUsageCollector,
 			WithDriveAudit:       *reconDriveAuditCollector,
@@ -73,19 +92,22 @@ func main() {
 			WithUnmounted:        *reconUnmountedCollector,
 			WithUpdaterSweepTime: *reconUpdaterSweepTimeCollector,
 			HostTimeout:          *reconHostTimeout,
-			CtxTimeout:           t,
-		}))
+			CtxTimeout:           time.Duration(*reconTimeout) * time.Second,
+		}
+		c := collector.NewReconCollector(path, opts, log.With(logger, "collector", "recon"))
+		prometheus.MustRegister(c)
 	}
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
-	http.HandleFunc("/", landingPageHandler)
+	http.HandleFunc("/", landingPageHandler(logger))
 	http.Handle("/metrics", promhttp.Handler())
-	logg.Info("listening on " + listenAddr)
+	level.Info(logger).Log("msg", "listening on "+listenAddr)
 	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background()), listenAddr, nil)
 	if err != nil {
-		logg.Fatal(err.Error())
+		level.Error(logger).Log("err", err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -97,22 +119,16 @@ func main() {
 // provided instead of a path, but we do this manually for two reasons:
 // 1. To terminate the program early in case the executable path could not be found.
 // 2. To save multiple LookPath() calls for the same executable.
-func getExecutablePath(envKey, fileName string) string {
-	val := os.Getenv(envKey)
-	if val != "" {
-		return val
+func getExecutablePath(envKey, fileName string) (string, error) {
+	if val := os.Getenv(envKey); val != "" {
+		return val, nil
 	}
-
-	path, err := exec.LookPath(fileName)
-	if err != nil {
-		logg.Fatal(err.Error())
-	}
-
-	return path
+	return exec.LookPath(fileName)
 }
 
-func landingPageHandler(w http.ResponseWriter, r *http.Request) {
-	pageBytes := []byte(`<html>
+func landingPageHandler(logger log.Logger) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pageBytes := []byte(`<html>
 <head><title>Swift Health Exporter</title></head>
 <body>
 <h1>Swift Health Exporter</h1>
@@ -121,8 +137,8 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>`)
 
-	_, err := w.Write(pageBytes)
-	if err != nil {
-		logg.Error(err.Error())
+		if _, err := w.Write(pageBytes); err != nil {
+			level.Error(logger).Log("msg", "could not write landing page bytes", "err", err)
+		}
 	}
 }
