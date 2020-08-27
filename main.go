@@ -52,10 +52,7 @@ func main() {
 	} else {
 		logger = level.NewFilter(logger, level.AllowInfo())
 	}
-	logger = log.With(logger,
-		"ts", log.DefaultTimestampUTC,
-		"caller", log.DefaultCaller,
-	)
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
 
 	reconCollector := *reconDiskUsageCollector || *reconDriveAuditCollector || !(*noReconMD5Collector) ||
 		*reconQuarantinedCollector || *reconReplicationCollector || *reconUnmountedCollector || *reconUpdaterSweepTimeCollector
