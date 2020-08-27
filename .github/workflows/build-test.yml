@@ -25,11 +25,8 @@ jobs:
         with:
           go-version: 1.15
 
-      - name: Basic build
-        run: make GO_BUILDFLAGS='-mod vendor'
-
       - name: Run checks
-        run: make check
+        run: make check GO_BUILDFLAGS='-mod vendor'
 
       - name: Upload coverage report to Coveralls
         run: |
