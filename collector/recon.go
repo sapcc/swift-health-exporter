@@ -195,8 +195,9 @@ func (t *reconDiskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 			err := json.Unmarshal(dataBytes, &disksData)
 			if err != nil {
 				exitCode = 1
-				logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+				logg.Error("swift recon: %s: %s: %s: %s",
+					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 				continue // to next host
 			}
 
@@ -394,8 +395,9 @@ func (t *reconUpdaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exit
 				err := json.Unmarshal(dataBytes, &data)
 				if err != nil {
 					exitCode = 1
-					logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-						cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+					outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+					logg.Error("swift recon: %s: %s: %s: %s",
+						cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 					continue // to next host
 				}
 
@@ -518,8 +520,9 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 				err := json.Unmarshal(dataBytes, &data)
 				if err != nil {
 					exitCode = 1
-					logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-						cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+					outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+					logg.Error("swift recon: %s: %s: %s: %s",
+						cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 					continue // to next host
 				}
 
@@ -600,8 +603,9 @@ func (t *reconQuarantinedTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 			err := json.Unmarshal(dataBytes, &data)
 			if err != nil {
 				exitCode = 1
-				logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+				logg.Error("swift recon: %s: %s: %s: %s",
+					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 				continue // to next host
 			}
 
@@ -659,8 +663,9 @@ func (t *reconUnmountedTask) collectMetrics(ch chan<- prometheus.Metric, exitCod
 			err := json.Unmarshal(dataBytes, &disksData)
 			if err != nil {
 				exitCode = 1
-				logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+				logg.Error("swift recon: %s: %s: %s: %s",
+					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 				continue // to next host
 			}
 
@@ -716,8 +721,9 @@ func (t *reconDriveAuditTask) collectMetrics(ch chan<- prometheus.Metric, exitCo
 			err := json.Unmarshal(dataBytes, &data)
 			if err != nil {
 				exitCode = 1
-				logg.Error("swift recon: %s: %s: %s: output follows:\n%s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), string(dataBytes))
+				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
+				logg.Error("swift recon: %s: %s: %s: %s",
+					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
 				continue // to next host
 			}
 
