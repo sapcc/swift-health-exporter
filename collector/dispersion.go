@@ -16,17 +16,16 @@ package collector
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sapcc/go-bits/logg"
 )
 
 // DispersionCollector implements the prometheus.Collector interface.
 type DispersionCollector struct {
-	logger           log.Logger
 	ctxTimeout       time.Duration
 	pathToExecutable string
 
@@ -47,9 +46,8 @@ type DispersionCollector struct {
 }
 
 // NewDispersionCollector creates a new DispersionCollector.
-func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration, l log.Logger) *DispersionCollector {
+func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration) *DispersionCollector {
 	return &DispersionCollector{
-		logger:           l,
 		ctxTimeout:       ctxTimeout,
 		pathToExecutable: pathToExecutable,
 		unmountedErrRe:   regexp.MustCompile(`(?m)^ERROR:\s*\d+\.\d+\.\d+\.\d+:\d+\/[a-zA-Z0-9-]+\s*is\s*unmounted.*$`),
@@ -156,7 +154,9 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 			} `json:"container"`
 		}
 		err = json.Unmarshal(out, &data)
-		if err == nil {
+		if err != nil {
+			err = fmt.Errorf("%s: output follows:\n%s", err.Error(), string(out))
+		} else {
 			cntr := data.Container
 			if cntr.Expected > 0 && cntr.Found > 0 {
 				cntr.Missing = cntr.Expected - cntr.Found
@@ -178,7 +178,7 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	if err != nil {
 		exitCode = 1
-		level.Error(c.logger).Log("cmdArgs", cmdArg, "err", err.Error(), "cmdOutput", string(out))
+		logg.Error("swift dispersion: %s: %s", cmdArg, err.Error())
 	}
 
 	ch <- c.exitCode.mustNewConstMetric(float64(exitCode), cmdArg)
