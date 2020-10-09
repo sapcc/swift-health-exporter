@@ -1,0 +1,21 @@
+# Configuration file for <https://github.com/sapcc/go-makefile-maker>
+
+binaries:
+  - name:        swift-health-exporter
+    fromPackage: .
+    installTo:   bin/
+
+  - name:        mock-swift-dispersion-report
+    fromPackage: ./test/cmd/mock-swift-dispersion-report
+  - name:        mock-swift-dispersion-report-with-errors
+    fromPackage: ./test/cmd/mock-swift-dispersion-report-with-errors
+  - name:        mock-swift-recon
+    fromPackage: ./test/cmd/mock-swift-recon
+  - name:        mock-swift-recon-with-errors
+    fromPackage: ./test/cmd/mock-swift-recon-with-errors
+
+coverageTest:
+  only: '/collector'
+
+vendoring:
+  enabled: true
