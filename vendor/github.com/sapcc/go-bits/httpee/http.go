@@ -1,6 +1,6 @@
 /*******************************************************************************
 *
-* Copyright 2019 SAP SE
+* Copyright 2019-2020 SAP SE
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 *
 *******************************************************************************/
 
-//Package httpee provides some convenience functions on top of the "http"
+//Package httpee provides some convenience functions on top of the "net/http"
 //package from the stdlib.
 package httpee
 
@@ -36,6 +36,9 @@ var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGTERM}
 
 // ContextWithSIGINT creates a new context.Context using the provided Context, and
 // launches a goroutine that cancels the Context when an interrupt signal is caught.
+//
+// This function is not strictly related to net/http, but fits nicely with func
+// ListenAndServeContext from this package.
 func ContextWithSIGINT(ctx context.Context) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
 	signalChan := make(chan os.Signal, 1)
