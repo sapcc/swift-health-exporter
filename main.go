@@ -20,14 +20,15 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
-	"github.com/alecthomas/kingpin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
 	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/swift-health-exporter/collector"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 func main() {
@@ -57,7 +58,8 @@ func main() {
 	if *dispersionCollector {
 		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t))
+		policies := getPolicies()
+		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t, policies))
 	}
 
 	if reconCollector {
@@ -97,6 +99,15 @@ func main() {
 // provided instead of a path, but we do this manually for two reasons:
 // 1. To terminate the program early in case the executable path could not be found.
 // 2. To save multiple LookPath() calls for the same executable.
+func getPolicies() []string {
+	val := os.Getenv("SWIFT_POLICIES")
+	if val == "" {
+		return []string{"default"}
+	}
+
+	return strings.Split(val, ",")
+}
+
 func getExecutablePath(envKey, fileName string) string {
 	val := os.Getenv(envKey)
 	if val != "" {
