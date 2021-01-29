@@ -17,6 +17,8 @@ package collector
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,44 +27,16 @@ import (
 
 // DispersionCollector implements the prometheus.Collector interface.
 type DispersionCollector struct {
-	ctxTimeout               time.Duration
-	taskExitCode             typedDesc
-	dispersionReportDumpTask collectorTask
-}
+	ctxTimeout       time.Duration
+	pathToExecutable string
+	policies         []string
 
-// NewDispersionCollector creates a new DispersionCollector.
-func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration) *DispersionCollector {
-	return &DispersionCollector{
-		taskExitCode: typedDesc{
-			desc: prometheus.NewDesc(
-				"swift_dispersion_task_exit_code",
-				"The exit code for a Swift Dispersion Report query execution.",
-				[]string{"query"}, nil),
-			valueType: prometheus.GaugeValue,
-		},
-		dispersionReportDumpTask: newDispersionReportDumpTask(pathToExecutable, ctxTimeout),
-	}
-}
+	// unmountedErrRe is used to match unmounted errors.
+	// E.g.:
+	//   ERROR: 10.0.0.1:6000/swift-09 is unmounted -- This will cause...
+	unmountedErrRe *regexp.Regexp
 
-// Describe implements the prometheus.Collector interface.
-func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
-	c.taskExitCode.describe(ch)
-	c.dispersionReportDumpTask.describeMetrics(ch)
-}
-
-// Collect implements the prometheus.Collector interface.
-func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
-	c.dispersionReportDumpTask.collectMetrics(ch, c.taskExitCode)
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Dispersion collector tasks.
-
-// dispersionReportDumpTask implements the collector.collectorTask interface.
-type dispersionReportDumpTask struct {
-	ctxTimeout                 time.Duration
-	pathToDispersionExecutable string
-
+	exitCode                typedDesc
 	containerCopiesExpected typedDesc
 	containerCopiesFound    typedDesc
 	containerCopiesMissing  typedDesc
@@ -73,129 +47,165 @@ type dispersionReportDumpTask struct {
 	objectOverlapping       typedDesc
 }
 
-func newDispersionReportDumpTask(pathToDispersionExecutable string, ctxTimeout time.Duration) collectorTask {
-	return &dispersionReportDumpTask{
-		ctxTimeout:                 ctxTimeout,
-		pathToDispersionExecutable: pathToDispersionExecutable,
+// NewDispersionCollector creates a new DispersionCollector.
+func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration, policies []string) *DispersionCollector {
+	return &DispersionCollector{
+		ctxTimeout:       ctxTimeout,
+		pathToExecutable: pathToExecutable,
+		policies:         policies,
+		unmountedErrRe:   regexp.MustCompile(`(?m)^ERROR:\s*\d+\.\d+\.\d+\.\d+:\d+\/[a-zA-Z0-9-]+\s*is\s*unmounted.*$`),
+		exitCode: typedDesc{
+			desc: prometheus.NewDesc(
+				"swift_dispersion_task_exit_code",
+				"The exit code for a Swift Dispersion Report query execution.",
+				[]string{"query"}, nil),
+			valueType: prometheus.GaugeValue,
+		},
 		containerCopiesExpected: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_container_copies_expected",
 				"Expected container copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		containerCopiesFound: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_container_copies_found",
 				"Found container copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		containerCopiesMissing: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_container_copies_missing",
 				"Missing container copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		containerOverlapping: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_container_overlapping",
 				"Expected container copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		objectCopiesExpected: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_object_copies_expected",
 				"Expected object copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		objectCopiesFound: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_object_copies_found",
 				"Found object copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		objectCopiesMissing: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_object_copies_missing",
 				"Missing object copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 		objectOverlapping: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_object_overlapping",
 				"Expected object copies reported by the swift-dispersion-report tool.",
-				nil, nil),
+				[]string{"policy"}, nil),
 			valueType: prometheus.GaugeValue,
 		},
 	}
 }
 
-// dispersionReportDumpTask implements the collector.collectorTask interface.
-func (t *dispersionReportDumpTask) describeMetrics(ch chan<- *prometheus.Desc) {
-	t.containerCopiesExpected.describe(ch)
-	t.containerCopiesFound.describe(ch)
-	t.containerCopiesMissing.describe(ch)
-	t.containerOverlapping.describe(ch)
-	t.objectCopiesExpected.describe(ch)
-	t.objectCopiesFound.describe(ch)
-	t.objectCopiesMissing.describe(ch)
-	t.objectOverlapping.describe(ch)
+// Describe implements the prometheus.Collector interface.
+func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
+	c.exitCode.describe(ch)
+	c.containerCopiesExpected.describe(ch)
+	c.containerCopiesFound.describe(ch)
+	c.containerCopiesMissing.describe(ch)
+	c.containerOverlapping.describe(ch)
+	c.objectCopiesExpected.describe(ch)
+	c.objectCopiesFound.describe(ch)
+	c.objectCopiesMissing.describe(ch)
+	c.objectOverlapping.describe(ch)
 }
 
-// dispersionReportDumpTask implements the collector.collectorTask interface.
-func (t *dispersionReportDumpTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc typedDesc) {
+// Collect implements the prometheus.Collector interface.
+// Ubi patch: collect from multiple policies instead of the default one
+func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 	exitCode := 0
-	cmdArg := "--dump-json"
-	// in large Swift clusters, the dispersion-report tool takes time. Hence the longer timeout.
-	out, err := runCommandWithTimeout(t.ctxTimeout, t.pathToDispersionExecutable, cmdArg)
-	if err == nil {
-		var data struct {
-			Object struct {
-				Expected    int64 `json:"copies_expected"`
-				Found       int64 `json:"copies_found"`
-				Overlapping int64 `json:"overlapping"`
-				Missing     int64
-			} `json:"object"`
-			Container struct {
-				Expected    int64 `json:"copies_expected"`
-				Found       int64 `json:"copies_found"`
-				Overlapping int64 `json:"overlapping"`
-				Missing     int64
-			} `json:"container"`
-		}
-		err = json.Unmarshal(out, &data)
-		if err != nil {
-			err = fmt.Errorf("%s: output follows:\n%s", err.Error(), string(out))
-		} else {
-			cntr := data.Container
-			if cntr.Expected > 0 && cntr.Found > 0 {
-				cntr.Missing = cntr.Expected - cntr.Found
-			}
-			ch <- t.containerCopiesExpected.mustNewConstMetric(float64(cntr.Expected))
-			ch <- t.containerCopiesFound.mustNewConstMetric(float64(cntr.Found))
-			ch <- t.containerCopiesMissing.mustNewConstMetric(float64(cntr.Missing))
-			ch <- t.containerOverlapping.mustNewConstMetric(float64(cntr.Overlapping))
+	policies := c.policies
+	// Keep it simple at time, use as many workers as policies
+	workers := len(policies)
+	cn := make(chan string)
 
-			obj := data.Object
-			if obj.Expected > 0 && obj.Found > 0 {
-				obj.Missing = obj.Expected - obj.Found
-			}
-			ch <- t.objectCopiesExpected.mustNewConstMetric(float64(obj.Expected))
-			ch <- t.objectCopiesFound.mustNewConstMetric(float64(obj.Found))
-			ch <- t.objectCopiesMissing.mustNewConstMetric(float64(obj.Missing))
-			ch <- t.objectOverlapping.mustNewConstMetric(float64(obj.Overlapping))
-		}
-	}
-	if err != nil {
-		exitCode = 1
-		logg.Error("swift dispersion: %s: %s", cmdArg, err.Error())
-	}
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for ii := 0; ii < workers; ii++ {
+		go func(cn chan string) {
+			for {
+				policy, more := <-cn
+				if more == false {
+					wg.Done()
+					return
+				}
+				cmdArg := []string{"--dump-json", "-P", policy}
+				out, err := runCommandWithTimeout(c.ctxTimeout, c.pathToExecutable, cmdArg...)
+				if err == nil {
+					// Get rid of unmounted errors.
+					out = c.unmountedErrRe.ReplaceAll(out, []byte{})
+					var data struct {
+						Object struct {
+							Expected    int64 `json:"copies_expected"`
+							Found       int64 `json:"copies_found"`
+							Overlapping int64 `json:"overlapping"`
+							Missing     int64
+						} `json:"object"`
+						Container struct {
+							Expected    int64 `json:"copies_expected"`
+							Found       int64 `json:"copies_found"`
+							Overlapping int64 `json:"overlapping"`
+							Missing     int64
+						} `json:"container"`
+					}
+					err = json.Unmarshal(out, &data)
+					if err != nil {
+						err = fmt.Errorf("%s: output follows:\n%s", err.Error(), string(out))
+					} else {
+						cntr := data.Container
+						if cntr.Expected > 0 && cntr.Found > 0 {
+							cntr.Missing = cntr.Expected - cntr.Found
+						}
+						ch <- c.containerCopiesExpected.mustNewConstMetric(float64(cntr.Expected), policy)
+						ch <- c.containerCopiesFound.mustNewConstMetric(float64(cntr.Found), policy)
+						ch <- c.containerCopiesMissing.mustNewConstMetric(float64(cntr.Missing), policy)
+						ch <- c.containerOverlapping.mustNewConstMetric(float64(cntr.Overlapping), policy)
 
-	ch <- exitCodeTypedDesc.mustNewConstMetric(float64(exitCode), cmdArg)
+						obj := data.Object
+						if obj.Expected > 0 && obj.Found > 0 {
+							obj.Missing = obj.Expected - obj.Found
+						}
+						ch <- c.objectCopiesExpected.mustNewConstMetric(float64(obj.Expected), policy)
+						ch <- c.objectCopiesFound.mustNewConstMetric(float64(obj.Found), policy)
+						ch <- c.objectCopiesMissing.mustNewConstMetric(float64(obj.Missing), policy)
+						ch <- c.objectOverlapping.mustNewConstMetric(float64(obj.Overlapping), policy)
+					}
+				}
+				if err != nil {
+					exitCode = 1
+					logg.Error("swift dispersion: %s: %s", cmdArg, err.Error())
+				}
+				//exit with the arguments to let user figure things out
+				ch <- c.exitCode.mustNewConstMetric(float64(exitCode), cmdArg[2])
+			}
+		}(cn)
+	}
+	for _, a := range policies {
+		cn <- a
+	}
+	close(cn)
+	wg.Wait()
 }
