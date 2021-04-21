@@ -80,10 +80,12 @@ func main() {
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
-	http.HandleFunc("/", landingPageHandler)
-	http.Handle("/metrics", promhttp.Handler())
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", landingPageHandler)
+	mux.Handle("/metrics", promhttp.Handler())
+	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
-	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background()), listenAddr, nil)
+	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background()), listenAddr, handler)
 	if err != nil {
 		logg.Fatal(err.Error())
 	}
