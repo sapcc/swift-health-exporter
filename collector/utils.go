@@ -17,7 +17,15 @@ package collector
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 )
+
+const clockSeconds int64 = 1
+
+// timeNow replaces time.Now in unit tests.
+func timeNow() time.Time {
+	return time.Unix(clockSeconds, 0).UTC()
+}
 
 // For fields that are sometimes missing, sometimes an integer, sometimes a
 // string.

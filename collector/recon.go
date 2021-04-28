@@ -27,7 +27,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
-	"github.com/sapcc/swift-health-exporter/test/cmd/utils"
 )
 
 // ReconCollector implements the prometheus.Collector interface.
@@ -528,7 +527,7 @@ func (t *reconReplicationTask) collectMetrics(ch chan<- prometheus.Metric, exitC
 
 				if data.ReplicationLast > 0 {
 					if t.isTest {
-						currentTime = float64(utils.TimeNow().Second())
+						currentTime = float64(timeNow().Second())
 					}
 					tDiff := currentTime - data.ReplicationLast
 					ch <- ageTypedDesc.mustNewConstMetric(tDiff, hostname)
