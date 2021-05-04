@@ -26,8 +26,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
 	"github.com/sapcc/go-bits/logg"
-	"github.com/sapcc/swift-health-exporter/collector"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/sapcc/swift-health-exporter/internal/dispersion"
+	"github.com/sapcc/swift-health-exporter/internal/recon"
 )
 
 func main() {
@@ -58,13 +60,13 @@ func main() {
 	if *dispersionCollector {
 		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t))
+		prometheus.MustRegister(dispersion.NewCollector(swiftDispersionReportPath, t))
 	}
 
 	if reconCollector {
 		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 		t := time.Duration(*reconTimeout) * time.Second
-		prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, collector.ReconCollectorOpts{
+		prometheus.MustRegister(recon.NewCollector(swiftReconPath, recon.CollectorOpts{
 			IsTest:               false,
 			WithDiskUsage:        *reconDiskUsageCollector,
 			WithDriveAudit:       *reconDriveAuditCollector,
