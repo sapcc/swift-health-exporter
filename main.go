@@ -33,6 +33,7 @@ import (
 func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
+	// In large Swift clusters the dispersion-report tool takes time, hence the longer timeout.
 	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
 	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()

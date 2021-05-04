@@ -15,6 +15,7 @@
 package collector
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"regexp"
@@ -29,7 +30,11 @@ type DispersionCollector struct {
 	ctxTimeout       time.Duration
 	pathToExecutable string
 
-	// unmountedErrRe is used to match unmounted errors.
+	// errRe is used to match errors and capture the hostname and error message.
+	// E.g.:
+	//   ERROR: 10.0.0.1:6000/swift-09: [Errno 111] ECONNREFUSED
+	errRe *regexp.Regexp
+	// unmountedErrRe is used to check for unmounted errors.
 	// E.g.:
 	//   ERROR: 10.0.0.1:6000/swift-09 is unmounted -- This will cause...
 	unmountedErrRe *regexp.Regexp
@@ -50,7 +55,8 @@ func NewDispersionCollector(pathToExecutable string, ctxTimeout time.Duration) *
 	return &DispersionCollector{
 		ctxTimeout:       ctxTimeout,
 		pathToExecutable: pathToExecutable,
-		unmountedErrRe:   regexp.MustCompile(`(?m)^ERROR:\s*\d+\.\d+\.\d+\.\d+:\d+\/[a-zA-Z0-9-]+\s*is\s*unmounted.*$`),
+		errRe:            regexp.MustCompile(`(?m)^ERROR:\s*([\d.]+)\S*\s*(.*)$`),
+		unmountedErrRe:   regexp.MustCompile(`is\s*unmounted`),
 		exitCode: typedDesc{
 			desc: prometheus.NewDesc(
 				"swift_dispersion_task_exit_code",
@@ -134,11 +140,23 @@ func (c *DispersionCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 	exitCode := 0
 	cmdArg := "--dump-json"
-	// in large Swift clusters, the dispersion-report tool takes time. Hence the longer timeout.
 	out, err := runCommandWithTimeout(c.ctxTimeout, c.pathToExecutable, cmdArg)
 	if err == nil {
-		// Get rid of unmounted errors.
-		out = c.unmountedErrRe.ReplaceAll(out, []byte{})
+		// Remove errors from the output and log 'em.
+		out = c.errRe.ReplaceAllFunc(out, func(m []byte) []byte {
+			// Skip unmounted errors. Recon collector's unmounted task will
+			// take care of it.
+			if !c.unmountedErrRe.Match(m) {
+				exitCode = 1
+				mList := c.errRe.FindStringSubmatch(string(m))
+				if len(mList) > 0 {
+					host := mList[1]
+					logg.Error("swift dispersion: %s: %s: %s", cmdArg, host, mList[2])
+				}
+			}
+			return []byte{}
+		})
+
 		var data struct {
 			Object struct {
 				Expected    int64 `json:"copies_expected"`
@@ -155,6 +173,9 @@ func (c *DispersionCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 		err = json.Unmarshal(out, &data)
 		if err != nil {
+			// Removing errors from output might have resulted in empty lines
+			// therefore we remove whitespace before logging.
+			out = bytes.TrimSpace(out)
 			err = fmt.Errorf("%s: output follows:\n%s", err.Error(), string(out))
 		} else {
 			cntr := data.Container
