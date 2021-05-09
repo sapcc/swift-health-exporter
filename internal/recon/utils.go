@@ -74,15 +74,15 @@ func runCommandWithTimeout(timeout time.Duration, name string, args ...string) (
 	return exec.CommandContext(ctx, name, args...).CombinedOutput()
 }
 
-var reconHostOutputRx = regexp.MustCompile(`(?m)^-> https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
+// reconHostOutputRx is used to extract per host output from an aggregate
+// output of a recon command.
+//
+// Match group ref:
+//  <1: host> <2: output>
+var reconHostOutputRx = regexp.MustCompile(`(?m)^(?:->|!!) https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
 
-func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	out, err := runCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	matchList := reconHostOutputRx.FindAllSubmatch(out, -1)
+func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, error) {
+	matchList := reconHostOutputRx.FindAllSubmatch(output, -1)
 	if len(matchList) == 0 {
 		return nil, errors.New("command did not return any usable output")
 	}
@@ -104,4 +104,13 @@ func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable strin
 	}
 
 	return result, nil
+}
+
+func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
+	out, err := runCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return splitOutputPerHost(out, cmdArgs)
 }

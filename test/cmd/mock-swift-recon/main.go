@@ -78,13 +78,31 @@ Disk usage: lowest: 5.88%, highest: 6.66%, avg: 6.20397492691%
 ===============================================================================`)
 
 var md5Data = []byte(`===============================================================================
---> Starting reconnaissance on 2 hosts (object)
+--> Starting reconnaissance on 4 hosts (object)
 ===============================================================================
-[2019-12-30 00:14:24] Checking ring md5sums
-2/2 hosts matched, 0 error[s] while checking hosts.
+[2021-05-04 17:57:31] Checking ring md5sums
+-> On disk object.ring.gz md5sum: 12345
+-> http://10.0.0.1:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.2:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.3:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.4:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.1:6000/recon/ringmd5 matches.
+-> http://10.0.0.2:6000/recon/ringmd5 matches.
+-> http://10.0.0.3:6000/recon/ringmd5 matches.
+-> http://10.0.0.4:6000/recon/ringmd5 matches.
+4/4 hosts matched, 0 error[s] while checking hosts.
 ===============================================================================
-[2019-12-30 00:14:24] Checking swift.conf md5sum
-2/2 hosts matched, 0 error[s] while checking hosts.
+[2021-05-04 17:57:31] Checking swift.conf md5sum
+-> On disk swift.conf md5sum: 12345
+-> http://10.0.0.1:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.2:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.3:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.4:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.1:6000/recon/swiftconfmd5 matches.
+-> http://10.0.0.2:6000/recon/swiftconfmd5 matches.
+-> http://10.0.0.3:6000/recon/swiftconfmd5 matches.
+-> http://10.0.0.4:6000/recon/swiftconfmd5 matches.
+4/4 hosts matched, 0 error[s] while checking hosts.
 ===============================================================================`)
 
 var containerUpdaterVerboseData = []byte(`===============================================================================

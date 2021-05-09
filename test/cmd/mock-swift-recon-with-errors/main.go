@@ -78,17 +78,29 @@ Disk usage: lowest: 5.88%, highest: 6.45%, avg: 6.21618072487%
 ===============================================================================`)
 
 var md5Data = []byte(`===============================================================================
---> Starting reconnaissance on 3 hosts (object)
+--> Starting reconnaissance on 4 hosts (object)
 ===============================================================================
-[2020-01-14 12:55:30] Checking ring md5sums
--> http://10.0.0.1:6000/recon/ringmd5: <urlopen error timed out>
+[2021-05-04 17:57:31] Checking ring md5sums
+-> On disk object.ring.gz md5sum: 12345
 -> http://10.0.0.2:6000/recon/ringmd5: <urlopen error timed out>
-1/3 hosts matched, 2 error[s] while checking hosts.
+-> http://10.0.0.1:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.3:6000/recon/ringmd5: {'/path/to/account.ring.gz': '12345', '/path/to/container.ring.gz': '12345', '/path/to/object.ring.gz': '12345'}
+-> http://10.0.0.1:6000/recon/ringmd5 matches.
+-> http://10.0.0.3:6000/recon/ringmd5 matches.
+!! http://10.0.0.4:6000/recon/ringmd5 (/path/to/account.ring.gz => 54321) doesn't match on disk md5sum
+!! http://10.0.0.4:6000/recon/ringmd5 (/path/to/container.ring.gz => 54321) doesn't match on disk md5sum
+!! http://10.0.0.4:6000/recon/ringmd5 (/path/to/object.ring.gz => 54321) doesn't match on disk md5sum
+2/4 hosts matched, 1 error[s] while checking hosts.
 ===============================================================================
-[2020-01-14 12:55:35] Checking swift.conf md5sum
--> http://10.0.0.1:6000/recon/swiftconfmd5: <urlopen error timed out>
--> http://10.0.0.2:6000/recon/swiftconfmd5: <urlopen error timed out>
-1/3 hosts matched, 2 error[s] while checking hosts.
+[2021-05-04 17:57:31] Checking swift.conf md5sum
+-> On disk swift.conf md5sum: 12345
+-> http://10.0.0.2:6000/recon/ringmd5: <urlopen error [Errno 111] ECONNREFUSED>
+-> http://10.0.0.1:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.3:6000/recon/swiftconfmd5: {'/path/to/swift.conf': '12345'}
+-> http://10.0.0.1:6000/recon/swiftconfmd5 matches.
+-> http://10.0.0.3:6000/recon/swiftconfmd5 matches.
+-> http://10.0.0.4:6000/recon/swiftconfmd5: (/path/to/swift.conf => 54321) doesn't match on disk md5sum
+2/4 hosts matched, 1 error[s] while checking hosts.
 ===============================================================================`)
 
 var containerUpdaterVerboseData = []byte(`===============================================================================
