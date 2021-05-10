@@ -81,7 +81,7 @@ func (t *md5Task) describeMetrics(ch chan<- *prometheus.Desc) {
 //   -> http://10.0.0.2:6000/recon/ringmd5 matches.
 // 1/2 hosts matched, 1 error[s] while checking hosts.
 var md5OutputBlockRx = regexp.MustCompile(
-	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:(?:->|!!)\s\S*\s.*\s*)*)\s*[0-9]+/[0-9]+ hosts matched, [0-9]+ error.*$`)
+	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:(?:->|!!).*\n)*)\s*[0-9]+/[0-9]+ hosts matched, [0-9]+ error.*$`)
 
 // collectMetrics implements the task interface.
 func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
