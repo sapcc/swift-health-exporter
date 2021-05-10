@@ -125,7 +125,7 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 		var all float64
 		for hostname, dataBytes := range outputPerHost {
 			// Host output can be in the following formats:
-			//   1. {'/path/to/<server-type>.ring.gz': '<md5-sum>', ...}
+			//   1. {"/path/to/<server-type>.ring.gz": "<md5-sum>", ...}
 			//   2. "matches."
 			//   3. "(/path/to/<server-type>.ring.gz => <md5-sum>) doesn't match on disk md5sum"
 			//   4. "some error message"
