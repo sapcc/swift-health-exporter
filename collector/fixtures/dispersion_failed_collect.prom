@@ -1,3 +1,0 @@
-# HELP swift_dispersion_task_exit_code The exit code for a Swift Dispersion Report query execution.
-# TYPE swift_dispersion_task_exit_code gauge
-swift_dispersion_task_exit_code{query="--dump-json"} 1

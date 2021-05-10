@@ -26,13 +26,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
 	"github.com/sapcc/go-bits/logg"
-	"github.com/sapcc/swift-health-exporter/collector"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/sapcc/swift-health-exporter/internal/dispersion"
+	"github.com/sapcc/swift-health-exporter/internal/recon"
 )
 
 func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
+	// In large Swift clusters the dispersion-report tool takes time, hence the longer timeout.
 	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
 	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
@@ -57,13 +60,13 @@ func main() {
 	if *dispersionCollector {
 		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(collector.NewDispersionCollector(swiftDispersionReportPath, t))
+		prometheus.MustRegister(dispersion.NewCollector(swiftDispersionReportPath, t))
 	}
 
 	if reconCollector {
 		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
 		t := time.Duration(*reconTimeout) * time.Second
-		prometheus.MustRegister(collector.NewReconCollector(swiftReconPath, collector.ReconCollectorOpts{
+		prometheus.MustRegister(recon.NewCollector(swiftReconPath, recon.CollectorOpts{
 			IsTest:               false,
 			WithDiskUsage:        *reconDiskUsageCollector,
 			WithDriveAudit:       *reconDriveAuditCollector,
