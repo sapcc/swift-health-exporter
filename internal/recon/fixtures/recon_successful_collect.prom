@@ -118,7 +118,7 @@ swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.2"} 0
 # TYPE swift_recon_task_exit_code gauge
 swift_recon_task_exit_code{query="--timeout=1 --diskusage --verbose"} 0
 swift_recon_task_exit_code{query="--timeout=1 --driveaudit --verbose"} 0
-swift_recon_task_exit_code{query="--timeout=1 --md5"} 0
+swift_recon_task_exit_code{query="--timeout=1 --md5 --verbose"} 0
 swift_recon_task_exit_code{query="--timeout=1 --quarantined --verbose"} 0
 swift_recon_task_exit_code{query="--timeout=1 --unmounted --verbose"} 0
 swift_recon_task_exit_code{query="--timeout=1 account --replication --verbose"} 0

@@ -86,7 +86,7 @@ var md5OutputBlockRx = regexp.MustCompile(
 // collectMetrics implements the task interface.
 func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
 	exitCode := 0
-	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--md5"}
+	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--md5", "--verbose"}
 	defer func() {
 		ch <- exitCodeTypedDesc.MustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
 	}()

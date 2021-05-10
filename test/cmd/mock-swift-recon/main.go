@@ -38,7 +38,7 @@ func main() {
 		os.Stdout.Write(diskUsageVerboseData)
 	case *driveAuditFlag && *verboseFlag:
 		os.Stdout.Write(driveAuditVerboseData)
-	case *md5Flag:
+	case *md5Flag && *verboseFlag:
 		os.Stdout.Write(md5Data)
 	case *quarantinedFlag && *verboseFlag:
 		os.Stdout.Write(quarantinedVerboseData)
