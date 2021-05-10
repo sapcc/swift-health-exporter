@@ -87,6 +87,7 @@ info and default timeout values.
 | `swift_dispersion_object_copies_missing`     |         |
 | `swift_dispersion_object_overlapping`        |         |
 | `swift_dispersion_task_exit_code`            | `query` |
+| `swift_dispersion_errors`                    |         |
 
 ### recon
 
@@ -113,12 +114,12 @@ info and default timeout values.
 
 #### recon.md5
 
-| Metric                          | Labels  |
-| -------                         | ------- |
-| `swift_cluster_md5_all`         | `kind`  |
-| `swift_cluster_md5_errors`      | `kind`  |
-| `swift_cluster_md5_matched`     | `kind`  |
-| `swift_cluster_md5_not_matched` | `kind`  |
+| Metric                          | Labels               |
+| -------                         | -------              |
+| `swift_cluster_md5_all`         | `kind`               |
+| `swift_cluster_md5_errors`      | `storage_ip`, `kind` |
+| `swift_cluster_md5_matched`     | `storage_ip`, `kind` |
+| `swift_cluster_md5_not_matched` | `storage_ip`, `kind` |
 
 #### recon.quarantined
 
