@@ -38,10 +38,6 @@ type Collector struct {
 	// E.g.:
 	//   ERROR: 10.0.0.1:6000/swift-09: [Errno 111] ECONNREFUSED
 	errRe *regexp.Regexp
-	// unmountedErrRe is used to check for unmounted errors.
-	// E.g.:
-	//   ERROR: 10.0.0.1:6000/swift-09 is unmounted -- This will cause...
-	unmountedErrRe *regexp.Regexp
 
 	exitCode                *promhelper.TypedDesc
 	containerCopiesExpected *promhelper.TypedDesc
@@ -60,7 +56,6 @@ func NewCollector(pathToExecutable string, ctxTimeout time.Duration) *Collector 
 		ctxTimeout:       ctxTimeout,
 		pathToExecutable: pathToExecutable,
 		errRe:            regexp.MustCompile(`(?m)^ERROR:\s*([\d.]+)\S*\s*(.*)$`),
-		unmountedErrRe:   regexp.MustCompile(`is\s*unmounted`),
 		exitCode: promhelper.NewGaugeTypedDesc(
 			"swift_dispersion_task_exit_code",
 			"The exit code for a Swift Dispersion Report query execution.", []string{"query"}),
@@ -116,7 +111,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 		out = c.errRe.ReplaceAllFunc(out, func(m []byte) []byte {
 			// Skip unmounted errors. Recon collector's unmounted task will
 			// take care of it.
-			if !c.unmountedErrRe.Match(m) {
+			if !bytes.Contains(m, []byte("is unmounted")) {
 				exitCode = 1
 				mList := c.errRe.FindStringSubmatch(string(m))
 				if len(mList) > 0 {
