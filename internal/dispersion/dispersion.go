@@ -40,6 +40,7 @@ type Collector struct {
 	errRe *regexp.Regexp
 
 	exitCode                *promhelper.TypedDesc
+	errors                  *promhelper.TypedDesc
 	containerCopiesExpected *promhelper.TypedDesc
 	containerCopiesFound    *promhelper.TypedDesc
 	containerCopiesMissing  *promhelper.TypedDesc
@@ -58,7 +59,10 @@ func NewCollector(pathToExecutable string, ctxTimeout time.Duration) *Collector 
 		errRe:            regexp.MustCompile(`(?m)^ERROR:\s*([\d.]+)\S*\s*(.*)$`),
 		exitCode: promhelper.NewGaugeTypedDesc(
 			"swift_dispersion_task_exit_code",
-			"The exit code for a Swift Dispersion Report query execution.", []string{"query"}),
+			"The exit code for a Swift dispersion report query execution.", []string{"query"}),
+		errors: promhelper.NewGaugeTypedDesc(
+			"swift_dispersion_errors",
+			"The number of errors in the Swift dispersion report.", nil),
 		containerCopiesExpected: promhelper.NewGaugeTypedDesc(
 			"swift_dispersion_container_copies_expected",
 			"Expected container copies reported by the swift-dispersion-report tool.", nil),
@@ -89,6 +93,7 @@ func NewCollector(pathToExecutable string, ctxTimeout time.Duration) *Collector 
 // Describe implements the prometheus.Collector interface.
 func (c *Collector) Describe(ch chan<- *prometheus.Desc) {
 	c.exitCode.Describe(ch)
+	c.errors.Describe(ch)
 	c.containerCopiesExpected.Describe(ch)
 	c.containerCopiesFound.Describe(ch)
 	c.containerCopiesMissing.Describe(ch)
@@ -107,11 +112,13 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 	out, err := exec.CommandContext(ctx, c.pathToExecutable, cmdArg).CombinedOutput()
 	if err == nil {
-		// Remove errors from the output and log 'em.
+		// Remove errors from the output.
+		var reportErrors float64
 		out = c.errRe.ReplaceAllFunc(out, func(m []byte) []byte {
 			// Skip unmounted errors. Recon collector's unmounted task will
 			// take care of it.
 			if !bytes.Contains(m, []byte("is unmounted")) {
+				reportErrors++
 				exitCode = 1
 				mList := c.errRe.FindStringSubmatch(string(m))
 				if len(mList) > 0 {
@@ -121,6 +128,7 @@ func (c *Collector) Collect(ch chan<- prometheus.Metric) {
 			}
 			return []byte{}
 		})
+		ch <- c.errors.MustNewConstMetric(reportErrors)
 
 		var data struct {
 			Object struct {
