@@ -115,8 +115,12 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 			continue // to next output block
 		}
 
-		// Since there could be multiple errors per host, errHosts is used to
-		// maintain a record of unique hostnames that had errors.
+		// allHostsMatch and errHosts are used to submit zero value metrics so
+		// that we can use aggregation rules in case that MD5 of all hosts for
+		// a specific kind matches.
+		allHostsMatch := true
+		// We use a map for errHosts to maintain a record of unique hostnames
+		// that had errors since there could be multiple errors per host.
 		errHosts := make(map[string]bool)
 		var all float64
 		for hostname, dataBytes := range outputPerHost {
@@ -136,6 +140,7 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 				ch <- t.matched.MustNewConstMetric(1, hostname, kind)
 				all++
 			case strings.Contains(str, `doesn"t match`): // func splitOutputPerHost() changes ' -> "
+				allHostsMatch = false
 				ch <- t.notMatched.MustNewConstMetric(1, hostname, kind)
 				all++
 			default:
@@ -149,5 +154,12 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 			all++
 		}
 		ch <- t.all.MustNewConstMetric(all, kind)
+
+		if allHostsMatch {
+			ch <- t.notMatched.MustNewConstMetric(0, "", kind)
+		}
+		if len(errHosts) == 0 {
+			ch <- t.errors.MustNewConstMetric(0, "", kind)
+		}
 	}
 }
