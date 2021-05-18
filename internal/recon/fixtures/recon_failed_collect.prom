@@ -25,23 +25,39 @@ swift_cluster_drives_audit_errors{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_drives_unmounted Unmounted drives reported by the swift-recon tool.
 # TYPE swift_cluster_drives_unmounted gauge
 swift_cluster_drives_unmounted{storage_ip="10.0.0.1"} 0
-# HELP swift_cluster_md5_all Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.
+# HELP swift_cluster_md5_all Sum of matched-, not matched, and errored hosts while checking md5sum(s) as reported by the swift-recon tool.
 # TYPE swift_cluster_md5_all gauge
 swift_cluster_md5_all{kind="ring"} 4
 swift_cluster_md5_all{kind="swift.conf"} 4
-# HELP swift_cluster_md5_errors Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.
+# HELP swift_cluster_md5_errors Error encountered while checking host for md5sum(s) as reported by the swift-recon tool.
 # TYPE swift_cluster_md5_errors gauge
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.1"} 0
 swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.2"} 1
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.4"} 0
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.1"} 0
 swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.2"} 1
-# HELP swift_cluster_md5_matched Matched hosts for md5sum(s) reported by the swift-recon tool.
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.4"} 0
+# HELP swift_cluster_md5_matched Matched host for md5sum(s) reported by the swift-recon tool.
 # TYPE swift_cluster_md5_matched gauge
 swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.1"} 1
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.2"} 0
 swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.3"} 1
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.4"} 0
 swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.1"} 1
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.2"} 0
 swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.3"} 1
-# HELP swift_cluster_md5_not_matched Not matched hosts for md5sum(s) reported by the swift-recon tool.
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.4"} 0
+# HELP swift_cluster_md5_not_matched Not matched host for md5sum(s) reported by the swift-recon tool.
 # TYPE swift_cluster_md5_not_matched gauge
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.3"} 0
 swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.4"} 1
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.3"} 0
 swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.4"} 1
 # HELP swift_cluster_objects_quarantined Quarantined objects reported by the swift-recon tool.
 # TYPE swift_cluster_objects_quarantined gauge
@@ -87,7 +103,7 @@ swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.1"} 0
 # TYPE swift_recon_task_exit_code gauge
 swift_recon_task_exit_code{query="--timeout=1 --diskusage --verbose"} 1
 swift_recon_task_exit_code{query="--timeout=1 --driveaudit --verbose"} 1
-swift_recon_task_exit_code{query="--timeout=1 --md5 --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 --md5 --verbose"} 0
 swift_recon_task_exit_code{query="--timeout=1 --quarantined --verbose"} 1
 swift_recon_task_exit_code{query="--timeout=1 --unmounted --verbose"} 1
 swift_recon_task_exit_code{query="--timeout=1 account --replication --verbose"} 1
