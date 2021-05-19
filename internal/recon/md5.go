@@ -46,16 +46,16 @@ func newMD5Task(pathToReconExecutable string, hostTimeout int, ctxTimeout time.D
 		pathToReconExecutable: pathToReconExecutable,
 		all: promhelper.NewGaugeTypedDesc(
 			"swift_cluster_md5_all",
-			"Sum of matched-, not matched hosts, and errors encountered while check hosts for md5sum(s) as reported by the swift-recon tool.", []string{"kind"}),
+			"Sum of matched-, not matched, and errored hosts while checking md5sum(s) as reported by the swift-recon tool.", []string{"kind"}),
 		errors: promhelper.NewGaugeTypedDesc(
 			"swift_cluster_md5_errors",
-			"Errors encountered while checking hosts for md5sum(s) as reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
+			"Error encountered while checking host for md5sum(s) as reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
 		matched: promhelper.NewGaugeTypedDesc(
 			"swift_cluster_md5_matched",
-			"Matched hosts for md5sum(s) reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
+			"Matched host for md5sum(s) reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
 		notMatched: promhelper.NewGaugeTypedDesc(
 			"swift_cluster_md5_not_matched",
-			"Not matched hosts for md5sum(s) reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
+			"Not matched host for md5sum(s) reported by the swift-recon tool.", []string{"storage_ip", "kind"}),
 	}
 }
 
@@ -115,13 +115,11 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 			continue // to next output block
 		}
 
-		// allHostsMatch and errHosts are used to submit zero value metrics so
-		// that we can use aggregation rules in case that MD5 of all hosts for
-		// a specific kind matches.
-		allHostsMatch := true
-		// We use a map for errHosts to maintain a record of unique hostnames
-		// that had errors since there could be multiple errors per host.
-		errHosts := make(map[string]bool)
+		// processedErrHost is a map that contains a list of hosts for which
+		// the error metric has already been submitted. We use this map to
+		// avoid submitting duplicate metrics since there could be multiple
+		// errors per host.
+		processedErrHost := make(map[string]bool)
 		var all float64
 		for hostname, dataBytes := range outputPerHost {
 			// Host output can be in the following formats:
@@ -135,31 +133,28 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 			}
 
 			str := string(dataBytes)
+			var matched, notMatched, errored float64
 			switch {
 			case strings.HasSuffix(str, "matches."):
-				ch <- t.matched.MustNewConstMetric(1, hostname, kind)
+				matched = 1
 				all++
 			case strings.Contains(str, `doesn"t match`): // func splitOutputPerHost() changes ' -> "
-				allHostsMatch = false
-				ch <- t.notMatched.MustNewConstMetric(1, hostname, kind)
+				notMatched = 1
 				all++
 			default:
-				errHosts[hostname] = true
+				if processedErrHost[hostname] {
+					continue // to next host
+				}
 				exitCode = 1
-				logg.Error("swift recon: %s: %s: %s: %s", cmdArgsToStr(cmdArgs), hostname, kind, str)
+				errored = 1
+				all++
+				processedErrHost[hostname] = true
 			}
-		}
-		for hostname := range errHosts {
-			ch <- t.errors.MustNewConstMetric(1, hostname, kind)
-			all++
+
+			ch <- t.matched.MustNewConstMetric(matched, hostname, kind)
+			ch <- t.notMatched.MustNewConstMetric(notMatched, hostname, kind)
+			ch <- t.errors.MustNewConstMetric(errored, hostname, kind)
 		}
 		ch <- t.all.MustNewConstMetric(all, kind)
-
-		if allHostsMatch {
-			ch <- t.notMatched.MustNewConstMetric(0, "", kind)
-		}
-		if len(errHosts) == 0 {
-			ch <- t.errors.MustNewConstMetric(0, "", kind)
-		}
 	}
 }
