@@ -145,6 +145,7 @@ func (t *md5Task) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc 
 				if processedErrHost[hostname] {
 					continue // to next host
 				}
+				exitCode = 1
 				errored = 1
 				all++
 				processedErrHost[hostname] = true
