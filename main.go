@@ -88,7 +88,7 @@ func main() {
 	mux.Handle("/metrics", promhttp.Handler())
 	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
-	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background()), listenAddr, handler)
+	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
 	if err != nil {
 		logg.Fatal(err.Error())
 	}
