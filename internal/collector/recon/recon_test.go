@@ -28,7 +28,7 @@ import (
 func TestReconCollector(t *testing.T) {
 	isTest = true
 
-	pathToExecutable, err := filepath.Abs("../../build/mock-swift-recon")
+	pathToExecutable, err := filepath.Abs("../../../build/mock-swift-recon")
 	if err != nil {
 		t.Error(err)
 	}
@@ -61,7 +61,7 @@ func TestReconCollector(t *testing.T) {
 func TestReconCollectorWithErrors(t *testing.T) {
 	isTest = true
 
-	pathToExecutable, err := filepath.Abs("../../build/mock-swift-recon-with-errors")
+	pathToExecutable, err := filepath.Abs("../../../build/mock-swift-recon-with-errors")
 	if err != nil {
 		t.Error(err)
 	}
