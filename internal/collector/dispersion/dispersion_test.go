@@ -32,7 +32,7 @@ func TestDispersionCollector(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	c := collector.New(1)
+	c := collector.New(0)
 	exitCode := GetTaskExitCodeTypedDesc(registry)
 	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
 	registry.MustRegister(c)
@@ -52,7 +52,7 @@ func TestDispersionCollectorWithErrors(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	c := collector.New(1)
+	c := collector.New(0)
 	exitCode := GetTaskExitCodeTypedDesc(registry)
 	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
 	registry.MustRegister(c)
