@@ -16,16 +16,14 @@ package recon
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"os/exec"
 	"regexp"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/sapcc/go-bits/logg"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
 const clockSeconds int64 = 1
@@ -64,16 +62,6 @@ func (value *flexibleUint64) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func cmdArgsToStr(cmdArgs []string) string {
-	return strings.Join(cmdArgs, " ")
-}
-
-func runCommandWithTimeout(timeout time.Duration, name string, args ...string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	return exec.CommandContext(ctx, name, args...).CombinedOutput()
-}
-
 // reconHostOutputRx is used to extract per host output from an aggregate
 // output of a recon command.
 //
@@ -92,7 +80,7 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		hostname := string(match[1])
 		data := match[2]
 
-		logg.Debug("output from command 'swift-recon %s': %s: %s", cmdArgsToStr(cmdArgs), hostname, string(data))
+		logg.Debug("output from command 'swift-recon %s': %s: %s", util.CmdArgsToStr(cmdArgs), hostname, string(data))
 
 		// sanitize JSON
 		data = bytes.ReplaceAll(data, []byte(`u'`), []byte(`'`))
@@ -107,7 +95,7 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 }
 
 func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	out, err := runCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
+	out, err := util.RunCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
 	if err != nil {
 		return nil, err
 	}

@@ -17,64 +17,83 @@ package recon
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
 
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
-// unmountedTask implements the collector.collectorTask interface.
-type unmountedTask struct {
-	pathToReconExecutable string
-	hostTimeout           int
-	ctxTimeout            time.Duration
+// UnmountedTask implements the collector.Task interface.
+type UnmountedTask struct {
+	opts    *TaskOpts
+	cmdArgs []string
 
-	unmountedDrives *promhelper.TypedDesc
+	unmountedDrives *prometheus.GaugeVec
 }
 
-func newUnmountedTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) task {
-	return &unmountedTask{
-		hostTimeout:           hostTimeout,
-		ctxTimeout:            ctxTimeout,
-		pathToReconExecutable: pathToReconExecutable,
-		unmountedDrives: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_drives_unmounted",
-			"Unmounted drives reported by the swift-recon tool.", []string{"storage_ip"}),
+// NewUnmountedTask returns a collector.Task for UnmountedTask.
+func NewUnmountedTask(opts *TaskOpts) collector.Task {
+	return &UnmountedTask{
+		opts:    opts,
+		cmdArgs: []string{fmt.Sprintf("--timeout=%d", opts.HostTimeout), "--unmounted", "--verbose"},
+		unmountedDrives: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_drives_unmounted",
+				Help: "Unmounted drives reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
 	}
 }
 
-// describeMetrics implements the task interface.
-func (t *unmountedTask) describeMetrics(ch chan<- *prometheus.Desc) {
+// Name implements the collector.Task interface.
+func (t *UnmountedTask) Name() string {
+	return "recon-unmounted"
+}
+
+// DescribeMetrics implements the collector.Task interface.
+func (t *UnmountedTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 	t.unmountedDrives.Describe(ch)
 }
 
-// collectMetrics implements the task interface.
-func (t *unmountedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
-	exitCode := 0
-	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--unmounted", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
-	if err == nil {
-		for hostname, dataBytes := range outputPerHost {
-			var disksData []struct {
-				Device string `json:"device"`
-			}
-			err := json.Unmarshal(dataBytes, &disksData)
-			if err != nil {
-				exitCode = 1
-				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
-				logg.Error("swift recon: %s: %s: %s: %s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
-				continue // to next host
-			}
+// CollectMetrics implements the collector.Task interface.
+func (t *UnmountedTask) CollectMetrics(ch chan<- prometheus.Metric) {
+	t.unmountedDrives.Collect(ch)
+}
 
-			ch <- t.unmountedDrives.MustNewConstMetric(float64(len(disksData)), hostname)
-		}
-	} else {
-		exitCode = 1
-		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
+// Measure implements the collector.Task interface.
+func (t *UnmountedTask) Measure() (map[string]int, error) {
+	q := util.CmdArgsToStr(t.cmdArgs)
+	queries := map[string]int{q: 0}
+	e := &collector.TaskError{
+		Cmd:     "swift-recon",
+		CmdArgs: t.cmdArgs,
 	}
 
-	ch <- exitCodeTypedDesc.MustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+	outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
+	if err != nil {
+		queries[q] = 1
+		e.Inner = err
+		return queries, e
+	}
+
+	for hostname, dataBytes := range outputPerHost {
+		var disksData []struct {
+			Device string `json:"device"`
+		}
+		err := json.Unmarshal(dataBytes, &disksData)
+		if err != nil {
+			queries[q] = 1
+			e.Inner = err
+			e.Hostname = hostname
+			e.CmdOutput = string(dataBytes)
+			logg.Debug(e.Error())
+			continue // to next host
+		}
+
+		t.unmountedDrives.With(prometheus.Labels{"storage_ip": hostname}).
+			Set(float64(len(disksData)))
+	}
+
+	return queries, nil
 }

@@ -22,27 +22,34 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/assert"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
 )
 
 func TestReconCollector(t *testing.T) {
+	isTest = true
+
 	pathToExecutable, err := filepath.Abs("../../build/mock-swift-recon")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewCollector(pathToExecutable, CollectorOpts{
-		IsTest:               true,
-		WithDiskUsage:        true,
-		WithDriveAudit:       true,
-		WithMD5:              true,
-		WithQuarantined:      true,
-		WithReplication:      true,
-		WithUnmounted:        true,
-		WithUpdaterSweepTime: true,
-		HostTimeout:          1,
-		CtxTimeout:           4 * time.Second,
-	}))
+	c := collector.New(0)
+	exitCode := GetTaskExitCodeTypedDesc(registry)
+	opts := &TaskOpts{
+		PathToExecutable: pathToExecutable,
+		HostTimeout:      1,
+		CtxTimeout:       4 * time.Second,
+	}
+	c.AddTask(true, NewDiskUsageTask(opts), exitCode)
+	c.AddTask(true, NewDriveAuditTask(opts), exitCode)
+	c.AddTask(true, NewMD5Task(opts), exitCode)
+	c.AddTask(true, NewQuarantinedTask(opts), exitCode)
+	c.AddTask(true, NewReplicationTask(opts), exitCode)
+	c.AddTask(true, NewUnmountedTask(opts), exitCode)
+	c.AddTask(true, NewUpdaterSweepTask(opts), exitCode)
+	registry.MustRegister(c)
+
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -52,24 +59,32 @@ func TestReconCollector(t *testing.T) {
 }
 
 func TestReconCollectorWithErrors(t *testing.T) {
+	isTest = true
+
 	pathToExecutable, err := filepath.Abs("../../build/mock-swift-recon-with-errors")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewCollector(pathToExecutable, CollectorOpts{
-		IsTest:               true,
-		WithDiskUsage:        true,
-		WithDriveAudit:       true,
-		WithMD5:              true,
-		WithQuarantined:      true,
-		WithReplication:      true,
-		WithUnmounted:        true,
-		WithUpdaterSweepTime: true,
-		HostTimeout:          1,
-		CtxTimeout:           4 * time.Second,
-	}))
+	c := collector.New(0)
+	exitCode := GetTaskExitCodeTypedDesc(registry)
+	opts := &TaskOpts{
+		PathToExecutable: pathToExecutable,
+		HostTimeout:      1,
+		CtxTimeout:       4 * time.Second,
+	}
+	c.AddTask(true, NewDiskUsageTask(opts), exitCode)
+	c.AddTask(true, NewDriveAuditTask(opts), exitCode)
+	c.AddTask(true, NewMD5Task(opts), exitCode)
+	c.AddTask(true, NewQuarantinedTask(opts), exitCode)
+	c.AddTask(true, NewReplicationTask(opts), exitCode)
+	c.AddTask(true, NewUnmountedTask(opts), exitCode)
+	c.AddTask(true, NewUpdaterSweepTask(opts), exitCode)
+	registry.MustRegister(c)
+
+	// For first attempt, we'll get metric results and exit code will be 0 because error
+	// is reported only after max failure count has been exceeded.
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

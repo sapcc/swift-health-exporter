@@ -17,78 +17,103 @@ package recon
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
 
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
-// quarantinedTask implements the collector.collectorTask interface.
-type quarantinedTask struct {
-	pathToReconExecutable string
-	hostTimeout           int
-	ctxTimeout            time.Duration
+// QuarantinedTask implements the collector.Task interface.
+type QuarantinedTask struct {
+	opts    *TaskOpts
+	cmdArgs []string
 
-	accounts   *promhelper.TypedDesc
-	containers *promhelper.TypedDesc
-	objects    *promhelper.TypedDesc
+	accounts   *prometheus.GaugeVec
+	containers *prometheus.GaugeVec
+	objects    *prometheus.GaugeVec
 }
 
-func newQuarantinedTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) task {
-	return &quarantinedTask{
-		hostTimeout:           hostTimeout,
-		ctxTimeout:            ctxTimeout,
-		pathToReconExecutable: pathToReconExecutable,
-		accounts: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_accounts_quarantined",
-			"Quarantined accounts reported by the swift-recon tool.", []string{"storage_ip"}),
-		containers: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_containers_quarantined",
-			"Quarantined containers reported by the swift-recon tool.", []string{"storage_ip"}),
-		objects: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_objects_quarantined",
-			"Quarantined objects reported by the swift-recon tool.", []string{"storage_ip"}),
+// NewQuarantinedTask returns a collector.Task for QurantinedTask.
+func NewQuarantinedTask(opts *TaskOpts) collector.Task {
+	return &QuarantinedTask{
+		opts:    opts,
+		cmdArgs: []string{fmt.Sprintf("--timeout=%d", opts.HostTimeout), "--quarantined", "--verbose"},
+		accounts: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_accounts_quarantined",
+				Help: "Quarantined accounts reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
+		containers: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_containers_quarantined",
+				Help: "Quarantined containers reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
+		objects: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_objects_quarantined",
+				Help: "Quarantined objects reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
 	}
 }
 
-// describeMetrics implements the task interface.
-func (t *quarantinedTask) describeMetrics(ch chan<- *prometheus.Desc) {
+// Name implements the collector.Task interface.
+func (t *QuarantinedTask) Name() string {
+	return "recon-quarantined"
+}
+
+// DescribeMetrics implements the collector.Task interface.
+func (t *QuarantinedTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 	t.accounts.Describe(ch)
 	t.containers.Describe(ch)
 	t.objects.Describe(ch)
 }
 
-// collectMetrics implements the task interface.
-func (t *quarantinedTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
-	exitCode := 0
-	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--quarantined", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
-	if err == nil {
-		for hostname, dataBytes := range outputPerHost {
-			var data struct {
-				Objects    int64 `json:"objects"`
-				Accounts   int64 `json:"accounts"`
-				Containers int64 `json:"containers"`
-			}
-			err := json.Unmarshal(dataBytes, &data)
-			if err != nil {
-				exitCode = 1
-				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
-				logg.Error("swift recon: %s: %s: %s: %s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
-				continue // to next host
-			}
+// CollectMetrics implements the collector.Task interface.
+func (t *QuarantinedTask) CollectMetrics(ch chan<- prometheus.Metric) {
+	t.accounts.Collect(ch)
+	t.containers.Collect(ch)
+	t.objects.Collect(ch)
+}
 
-			ch <- t.accounts.MustNewConstMetric(float64(data.Accounts), hostname)
-			ch <- t.containers.MustNewConstMetric(float64(data.Containers), hostname)
-			ch <- t.objects.MustNewConstMetric(float64(data.Objects), hostname)
-		}
-	} else {
-		exitCode = 1
-		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
+// Measure implements the collector.Task interface.
+func (t *QuarantinedTask) Measure() (map[string]int, error) {
+	q := util.CmdArgsToStr(t.cmdArgs)
+	queries := map[string]int{q: 0}
+	e := &collector.TaskError{
+		Cmd:     "swift-recon",
+		CmdArgs: t.cmdArgs,
 	}
 
-	ch <- exitCodeTypedDesc.MustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+	outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
+	if err != nil {
+		queries[q] = 1
+		e.Inner = err
+		return queries, e
+	}
+
+	for hostname, dataBytes := range outputPerHost {
+		var data struct {
+			Objects    int64 `json:"objects"`
+			Accounts   int64 `json:"accounts"`
+			Containers int64 `json:"containers"`
+		}
+		err := json.Unmarshal(dataBytes, &data)
+		if err != nil {
+			queries[q] = 1
+			e.Inner = err
+			e.Hostname = hostname
+			e.CmdOutput = string(dataBytes)
+			logg.Debug(e.Error())
+			continue // to next host
+		}
+
+		l := prometheus.Labels{"storage_ip": hostname}
+		t.accounts.With(l).Set(float64(data.Accounts))
+		t.containers.With(l).Set(float64(data.Containers))
+		t.objects.With(l).Set(float64(data.Objects))
+	}
+
+	return queries, nil
 }

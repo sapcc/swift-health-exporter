@@ -17,80 +17,108 @@ package recon
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
 
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
-// updaterSweepTask implements the collector.collectorTask interface.
-type updaterSweepTask struct {
-	pathToReconExecutable string
-	hostTimeout           int
-	ctxTimeout            time.Duration
+// UpdaterSweepTask implements the collector.Task interface.
+type UpdaterSweepTask struct {
+	opts    *TaskOpts
+	cmdArgs []string
 
-	containerTime *promhelper.TypedDesc
-	objectTime    *promhelper.TypedDesc
+	containerTime *prometheus.GaugeVec
+	objectTime    *prometheus.GaugeVec
 }
 
-func newUpdaterSweepTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) task {
-	return &updaterSweepTask{
-		hostTimeout:           hostTimeout,
-		ctxTimeout:            ctxTimeout,
-		pathToReconExecutable: pathToReconExecutable,
-		containerTime: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_containers_updater_sweep_time",
-			"Container updater sweep time reported by the swift-recon tool.", []string{"storage_ip"}),
-		objectTime: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_objects_updater_sweep_time",
-			"Object updater sweep time reported by the swift-recon tool.", []string{"storage_ip"}),
+// NewUpdaterSweepTask returns a collector.Task for UpdaterSweepTask.
+func NewUpdaterSweepTask(opts *TaskOpts) collector.Task {
+	return &UpdaterSweepTask{
+		opts: opts,
+		// <server-type> gets substituted in Measure().
+		cmdArgs: []string{
+			fmt.Sprintf("--timeout=%d", opts.HostTimeout), "<server-type>",
+			"--updater", "--verbose",
+		},
+		containerTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_containers_updater_sweep_time",
+				Help: "Container updater sweep time reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
+		objectTime: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_objects_updater_sweep_time",
+				Help: "Object updater sweep time reported by the swift-recon tool.",
+			}, []string{"storage_ip"}),
 	}
 }
 
-// describeMetrics implements the task interface.
-func (t *updaterSweepTask) describeMetrics(ch chan<- *prometheus.Desc) {
+// Name implements the collector.Task interface.
+func (t *UpdaterSweepTask) Name() string {
+	return "recon-updater-sweep-time"
+}
+
+// DescribeMetrics implements the collector.Task interface.
+func (t *UpdaterSweepTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 	t.containerTime.Describe(ch)
 	t.objectTime.Describe(ch)
 }
 
-// collectMetrics implements the task interface.
-func (t *updaterSweepTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
+// CollectMetrics implements the collector.Task interface.
+func (t *UpdaterSweepTask) CollectMetrics(ch chan<- prometheus.Metric) {
+	t.containerTime.Collect(ch)
+	t.objectTime.Collect(ch)
+}
+
+// Measure implements the collector.Task interface.
+func (t *UpdaterSweepTask) Measure() (map[string]int, error) {
+	queries := make(map[string]int)
 	serverTypes := []string{"container", "object"}
 	for _, server := range serverTypes {
-		exitCode := 0
-		cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), server, "--updater", "--verbose"}
-		outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
-		if err == nil {
-			for hostname, dataBytes := range outputPerHost {
-				var data struct {
-					ContainerUpdaterSweepTime float64 `json:"container_updater_sweep"`
-					ObjectUpdaterSweepTime    float64 `json:"object_updater_sweep"`
-				}
-				err := json.Unmarshal(dataBytes, &data)
-				if err != nil {
-					exitCode = 1
-					outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
-					logg.Error("swift recon: %s: %s: %s: %s",
-						cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
-					continue // to next host
-				}
-
-				val := data.ContainerUpdaterSweepTime
-				desc := t.containerTime
-				if server == "object" {
-					val = data.ObjectUpdaterSweepTime
-					desc = t.objectTime
-				}
-
-				ch <- desc.MustNewConstMetric(val, hostname)
-			}
-		} else {
-			exitCode = 1
-			logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
+		cmdArgs := t.cmdArgs
+		cmdArgs[1] = server
+		q := util.CmdArgsToStr(cmdArgs)
+		queries[q] = 0
+		e := &collector.TaskError{
+			Cmd:     "swift-recon",
+			CmdArgs: cmdArgs,
 		}
 
-		ch <- exitCodeTypedDesc.MustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+		outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, cmdArgs...)
+		if err != nil {
+			queries[q] = 1
+			e.Inner = err
+			return queries, e
+		}
+
+		for hostname, dataBytes := range outputPerHost {
+			var data struct {
+				ContainerUpdaterSweepTime float64 `json:"container_updater_sweep"`
+				ObjectUpdaterSweepTime    float64 `json:"object_updater_sweep"`
+			}
+			err := json.Unmarshal(dataBytes, &data)
+			if err != nil {
+				queries[q] = 1
+				e.Inner = err
+				e.Hostname = hostname
+				e.CmdOutput = string(dataBytes)
+				logg.Debug(e.Error())
+				continue // to next host
+			}
+
+			val := data.ContainerUpdaterSweepTime
+			gaugeVec := t.containerTime
+			if server == "object" {
+				val = data.ObjectUpdaterSweepTime
+				gaugeVec = t.objectTime
+			}
+
+			gaugeVec.With(prometheus.Labels{"storage_ip": hostname}).Set(val)
+		}
 	}
+
+	return queries, nil
 }

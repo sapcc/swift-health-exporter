@@ -18,56 +18,73 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
 
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
-// diskUsageTask implements the collector.collectorTask interface.
-type diskUsageTask struct {
-	pathToReconExecutable string
-	hostTimeout           int
-	ctxTimeout            time.Duration
+// DiskUsageTask implements the collector.Task interface.
+type DiskUsageTask struct {
+	opts    *TaskOpts
+	cmdArgs []string
 
-	capacityBytes         *promhelper.TypedDesc
-	freeBytes             *promhelper.TypedDesc
-	usedBytes             *promhelper.TypedDesc
-	fractionalUsage       *promhelper.TypedDesc
-	fractionalUsageByDisk *promhelper.TypedDesc
+	specialCharRe *regexp.Regexp
+
+	capacityBytes         prometheus.Gauge
+	freeBytes             prometheus.Gauge
+	usedBytes             prometheus.Gauge
+	fractionalUsage       prometheus.Gauge
+	fractionalUsageByDisk *prometheus.GaugeVec
 }
 
-func newDiskUsageTask(pathToReconExecutable string, hostTimeout int, ctxTimeout time.Duration) task {
-	return &diskUsageTask{
-		hostTimeout:           hostTimeout,
-		ctxTimeout:            ctxTimeout,
-		pathToReconExecutable: pathToReconExecutable,
-		capacityBytes: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_storage_capacity_bytes",
-			"Capacity storage bytes as reported by the swift-recon tool.", nil),
-		freeBytes: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_storage_free_bytes",
-			"Free storage bytes as reported by the swift-recon tool.", nil),
-		usedBytes: promhelper.NewGaugeTypedDesc(
-			"swift_cluster_storage_used_bytes",
-			"Used storage bytes as reported by the swift-recon tool.", nil),
-		fractionalUsage: promhelper.NewGaugeTypedDesc(
-			// In order to be consistent with the legacy system, the metric
-			// name uses the word percent instead of fractional.
-			"swift_cluster_storage_used_percent",
-			"Fractional usage as reported by the swift-recon tool.", nil),
-		fractionalUsageByDisk: promhelper.NewGaugeTypedDesc(
-			// In order to be consistent with the legacy system, the metric
-			// name uses the word percent instead of fractional.
-			"swift_cluster_storage_used_percent_by_disk",
-			"Fractional usage of a disk as reported by the swift-recon tool.", []string{"storage_ip", "disk"}),
+// NewDiskUsageTask returns a collector.Task for DiskUsageTask.
+func NewDiskUsageTask(opts *TaskOpts) collector.Task {
+	return &DiskUsageTask{
+		opts:          opts,
+		cmdArgs:       []string{fmt.Sprintf("--timeout=%d", opts.HostTimeout), "--diskusage", "--verbose"},
+		specialCharRe: regexp.MustCompile(`[^a-zA-Z0-9]+`),
+		capacityBytes: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_storage_capacity_bytes",
+				Help: "Capacity storage bytes as reported by the swift-recon tool.",
+			}),
+		freeBytes: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_storage_free_bytes",
+				Help: "Free storage bytes as reported by the swift-recon tool.",
+			}),
+		usedBytes: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name: "swift_cluster_storage_used_bytes",
+				Help: "Used storage bytes as reported by the swift-recon tool.",
+			}),
+		fractionalUsage: prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				// In order to be consistent with the legacy system, the metric
+				// name uses the word percent instead of fractional.
+				Name: "swift_cluster_storage_used_percent",
+				Help: "Fractional usage as reported by the swift-recon tool.",
+			}),
+		fractionalUsageByDisk: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				// In order to be consistent with the legacy system, the metric
+				// name uses the word percent instead of fractional.
+				Name: "swift_cluster_storage_used_percent_by_disk",
+				Help: "Fractional usage of a disk as reported by the swift-recon tool.",
+			}, []string{"storage_ip", "disk"}),
 	}
 }
 
-// describeMetrics implements the task interface.
-func (t *diskUsageTask) describeMetrics(ch chan<- *prometheus.Desc) {
+// Name implements the collector.Task interface.
+func (t *DiskUsageTask) Name() string {
+	return "recon-diskusage"
+}
+
+// DescribeMetrics implements the collector.Task interface.
+func (t *DiskUsageTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 	t.capacityBytes.Describe(ch)
 	t.freeBytes.Describe(ch)
 	t.usedBytes.Describe(ch)
@@ -75,62 +92,79 @@ func (t *diskUsageTask) describeMetrics(ch chan<- *prometheus.Desc) {
 	t.fractionalUsageByDisk.Describe(ch)
 }
 
-var specialCharRx = regexp.MustCompile(`[^a-zA-Z0-9]+`)
+// CollectMetrics implements the collector.Task interface.
+func (t *DiskUsageTask) CollectMetrics(ch chan<- prometheus.Metric) {
+	t.capacityBytes.Collect(ch)
+	t.freeBytes.Collect(ch)
+	t.usedBytes.Collect(ch)
+	t.fractionalUsage.Collect(ch)
+	t.fractionalUsageByDisk.Collect(ch)
+}
 
-// collectMetrics implements the task interface.
-func (t *diskUsageTask) collectMetrics(ch chan<- prometheus.Metric, exitCodeTypedDesc *promhelper.TypedDesc) {
-	exitCode := 0
-	cmdArgs := []string{fmt.Sprintf("--timeout=%d", t.hostTimeout), "--diskusage", "--verbose"}
-	outputPerHost, err := getSwiftReconOutputPerHost(t.ctxTimeout, t.pathToReconExecutable, cmdArgs...)
-	if err == nil {
-		var totalFree, totalUsed, totalSize flexibleUint64
-		for hostname, dataBytes := range outputPerHost {
-			var disksData []struct {
-				Device  string         `json:"device"`
-				Avail   flexibleUint64 `json:"avail"`
-				Mounted bool           `json:"mounted"`
-				Used    flexibleUint64 `json:"used"`
-				Size    flexibleUint64 `json:"size"`
-			}
-			err := json.Unmarshal(dataBytes, &disksData)
-			if err != nil {
-				exitCode = 1
-				outStr := fmt.Sprintf("output follows:\n%s", string(dataBytes))
-				logg.Error("swift recon: %s: %s: %s: %s",
-					cmdArgsToStr(cmdArgs), hostname, err.Error(), outStr)
-				continue // to next host
-			}
-
-			for _, disk := range disksData {
-				if !(disk.Mounted) {
-					continue // to next disk
-				}
-
-				totalFree += disk.Avail
-				totalUsed += disk.Used
-				totalSize += disk.Size
-
-				// submit metrics by disk (only fractional usage, which is the
-				// most useful for alerting)
-				device := specialCharRx.ReplaceAllLiteralString(disk.Device, "")
-				diskUsageRatio := float64(disk.Used) / float64(disk.Size)
-				ch <- t.fractionalUsageByDisk.MustNewConstMetric(diskUsageRatio, hostname, device)
-			}
-		}
-
-		usageRatio := float64(totalUsed) / float64(totalSize)
-		if totalSize == 0 {
-			usageRatio = 1.0
-		}
-
-		ch <- t.fractionalUsage.MustNewConstMetric(usageRatio)
-		ch <- t.usedBytes.MustNewConstMetric(float64(totalUsed))
-		ch <- t.freeBytes.MustNewConstMetric(float64(totalFree))
-		ch <- t.capacityBytes.MustNewConstMetric(float64(totalSize))
-	} else {
-		exitCode = 1
-		logg.Error("swift recon: %s: %s", cmdArgsToStr(cmdArgs), err.Error())
+// Measure implements the collector.Task interface.
+func (t *DiskUsageTask) Measure() (map[string]int, error) {
+	q := util.CmdArgsToStr(t.cmdArgs)
+	queries := map[string]int{q: 0}
+	e := &collector.TaskError{
+		Cmd:     "swift-recon",
+		CmdArgs: t.cmdArgs,
 	}
 
-	ch <- exitCodeTypedDesc.MustNewConstMetric(float64(exitCode), cmdArgsToStr(cmdArgs))
+	outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
+	if err != nil {
+		queries[q] = 1
+		e.Inner = err
+		return queries, e
+	}
+
+	var totalFree, totalUsed, totalSize flexibleUint64
+	for hostname, dataBytes := range outputPerHost {
+		var disksData []struct {
+			Device  string         `json:"device"`
+			Avail   flexibleUint64 `json:"avail"`
+			Mounted bool           `json:"mounted"`
+			Used    flexibleUint64 `json:"used"`
+			Size    flexibleUint64 `json:"size"`
+		}
+		err := json.Unmarshal(dataBytes, &disksData)
+		if err != nil {
+			queries[q] = 1
+			e.Inner = err
+			e.Hostname = hostname
+			e.CmdOutput = string(dataBytes)
+			logg.Debug(e.Error())
+			continue // to next host
+		}
+
+		for _, disk := range disksData {
+			if !(disk.Mounted) {
+				continue // to next disk
+			}
+
+			totalFree += disk.Avail
+			totalUsed += disk.Used
+			totalSize += disk.Size
+
+			// submit metrics by disk (only fractional usage, which is the
+			// most useful for alerting)
+			device := t.specialCharRe.ReplaceAllLiteralString(disk.Device, "")
+			diskUsageRatio := float64(disk.Used) / float64(disk.Size)
+			t.fractionalUsageByDisk.With(prometheus.Labels{
+				"storage_ip": hostname,
+				"disk":       device,
+			}).Set(float64(diskUsageRatio))
+		}
+	}
+
+	usageRatio := float64(totalUsed) / float64(totalSize)
+	if totalSize == 0 {
+		usageRatio = 1.0
+	}
+
+	t.fractionalUsage.Set(usageRatio)
+	t.usedBytes.Set(float64(totalUsed))
+	t.freeBytes.Set(float64(totalFree))
+	t.capacityBytes.Set(float64(totalSize))
+
+	return queries, nil
 }
