@@ -22,16 +22,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/assert"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
 )
 
 func TestDispersionCollector(t *testing.T) {
-	pathToExecutable, err := filepath.Abs("../../build/mock-swift-dispersion-report")
+	pathToExecutable, err := filepath.Abs("../../../build/mock-swift-dispersion-report")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewCollector(pathToExecutable, 20*time.Second))
+	c := collector.New(1)
+	exitCode := GetTaskExitCodeTypedDesc(registry)
+	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
+	registry.MustRegister(c)
+
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -41,13 +46,17 @@ func TestDispersionCollector(t *testing.T) {
 }
 
 func TestDispersionCollectorWithErrors(t *testing.T) {
-	pathToExecutable, err := filepath.Abs("../../build/mock-swift-dispersion-report-with-errors")
+	pathToExecutable, err := filepath.Abs("../../../build/mock-swift-dispersion-report-with-errors")
 	if err != nil {
 		t.Error(err)
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	registry.MustRegister(NewCollector(pathToExecutable, 20*time.Second))
+	c := collector.New(1)
+	exitCode := GetTaskExitCodeTypedDesc(registry)
+	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
+	registry.MustRegister(c)
+
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
