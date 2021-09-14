@@ -18,24 +18,24 @@ import "github.com/prometheus/client_golang/prometheus"
 
 // TypedDesc holds the descriptor and value type for a specific metric.
 type TypedDesc struct {
-	desc      *prometheus.Desc
-	valueType prometheus.ValueType
+	Desc      *prometheus.Desc
+	ValueType prometheus.ValueType
 }
 
 // NewGaugeTypedDesc returns a new TypedDesc with Gauge as the value type.
 func NewGaugeTypedDesc(fqName, help string, variableLabels []string) *TypedDesc {
 	return &TypedDesc{
-		desc:      prometheus.NewDesc(fqName, help, variableLabels, nil),
-		valueType: prometheus.GaugeValue,
+		Desc:      prometheus.NewDesc(fqName, help, variableLabels, nil),
+		ValueType: prometheus.GaugeValue,
 	}
 }
 
 // MustNewConstMetric is a wrapper for prometheus.MustNewConstMetric.
 func (d *TypedDesc) MustNewConstMetric(value float64, labels ...string) prometheus.Metric {
-	return prometheus.MustNewConstMetric(d.desc, d.valueType, value, labels...)
+	return prometheus.MustNewConstMetric(d.Desc, d.ValueType, value, labels...)
 }
 
 // Describe describe the underlying metric on the channel.
 func (d *TypedDesc) Describe(ch chan<- *prometheus.Desc) {
-	ch <- d.desc
+	ch <- d.Desc
 }
