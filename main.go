@@ -28,8 +28,9 @@ import (
 	"github.com/sapcc/go-bits/logg"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/sapcc/swift-health-exporter/internal/dispersion"
-	"github.com/sapcc/swift-health-exporter/internal/recon"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
+	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
 )
 
 func main() {
@@ -57,35 +58,40 @@ func main() {
 		logg.Fatal("no collector enabled")
 	}
 
+	registry := prometheus.NewRegistry()
+	collector := collector.New(3)
+
 	if *dispersionCollector {
-		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(dispersion.NewCollector(swiftDispersionReportPath, t))
+		exitCode := dispersion.GetTaskExitCodeTypedDesc(registry)
+		collector.AddTask(true, dispersion.NewReportTask(execPath, t), exitCode)
 	}
 
 	if reconCollector {
-		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
-		t := time.Duration(*reconTimeout) * time.Second
-		prometheus.MustRegister(recon.NewCollector(swiftReconPath, recon.CollectorOpts{
-			IsTest:               false,
-			WithDiskUsage:        *reconDiskUsageCollector,
-			WithDriveAudit:       *reconDriveAuditCollector,
-			WithMD5:              !(*noReconMD5Collector),
-			WithQuarantined:      *reconQuarantinedCollector,
-			WithReplication:      *reconReplicationCollector,
-			WithUnmounted:        *reconUnmountedCollector,
-			WithUpdaterSweepTime: *reconUpdaterSweepTimeCollector,
-			HostTimeout:          *reconHostTimeout,
-			CtxTimeout:           t,
-		}))
+		exitCode := recon.GetTaskExitCodeTypedDesc(registry)
+		opts := &recon.TaskOpts{
+			PathToExecutable: getExecutablePath("SWIFT_RECON_PATH", "swift-recon"),
+			HostTimeout:      *reconHostTimeout,
+			CtxTimeout:       time.Duration(*reconTimeout) * time.Second,
+		}
+		collector.AddTask(*reconDiskUsageCollector, recon.NewDiskUsageTask(opts), exitCode)
+		collector.AddTask(*reconDriveAuditCollector, recon.NewDriveAuditTask(opts), exitCode)
+		collector.AddTask(!(*noReconMD5Collector), recon.NewMD5Task(opts), exitCode)
+		collector.AddTask(*reconQuarantinedCollector, recon.NewQuarantinedTask(opts), exitCode)
+		collector.AddTask(*reconReplicationCollector, recon.NewReplicationTask(opts), exitCode)
+		collector.AddTask(*reconUnmountedCollector, recon.NewUnmountedTask(opts), exitCode)
+		collector.AddTask(*reconUpdaterSweepTimeCollector, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
+
+	registry.MustRegister(collector)
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", landingPageHandler)
-	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
 	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
