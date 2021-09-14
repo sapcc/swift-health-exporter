@@ -26,6 +26,7 @@ type Collector struct {
 	ExitCodeMetrics map[string]*promhelper.TypedDesc // map of task name to its exit code metric
 }
 
+// New returns a new Collector.
 func New(maxFailures int) *Collector {
 	return &Collector{
 		MaxFailures:     maxFailures,
@@ -35,6 +36,7 @@ func New(maxFailures int) *Collector {
 	}
 }
 
+// AddTask adds a Task to the Collector along with its corresponding exit code TypedDesc.
 func (c *Collector) AddTask(shouldAdd bool, task Task, exitCode *promhelper.TypedDesc) {
 	if shouldAdd {
 		c.Tasks[task.Name()] = task

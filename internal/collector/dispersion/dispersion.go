@@ -29,6 +29,7 @@ import (
 	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
+// GetTaskExitCodeTypedDesc returns a TypedDesc for use with dispersion report tasks.
 func GetTaskExitCodeTypedDesc(r prometheus.Registerer) *promhelper.TypedDesc {
 	taskExitCodeGaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{

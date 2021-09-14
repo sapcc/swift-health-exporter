@@ -25,12 +25,14 @@ import (
 // This value is overwritten in unit tests.
 var isTest = false
 
+// TaskOpts holds common parameters that are used by all recon tasks.
 type TaskOpts struct {
 	PathToExecutable string
 	HostTimeout      int
 	CtxTimeout       time.Duration
 }
 
+// GetTaskExitCodeTypedDesc returns a TypedDesc for use with recon tasks.
 func GetTaskExitCodeTypedDesc(r prometheus.Registerer) *promhelper.TypedDesc {
 	taskExitCodeGaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
