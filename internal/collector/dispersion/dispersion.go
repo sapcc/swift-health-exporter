@@ -184,7 +184,7 @@ func (t *ReportTask) Measure() (map[string]int, error) {
 			if len(mList) > 0 {
 				e.Inner = errors.New(mList[2])
 				e.Hostname = mList[1]
-				logg.Debug(e.Error())
+				logg.Info(e.Error())
 			}
 		}
 		return []byte{}

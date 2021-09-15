@@ -132,7 +132,7 @@ func (t *DiskUsageTask) Measure() (map[string]int, error) {
 			e.Inner = err
 			e.Hostname = hostname
 			e.CmdOutput = string(dataBytes)
-			logg.Debug(e.Error())
+			logg.Info(e.Error())
 			continue // to next host
 		}
 

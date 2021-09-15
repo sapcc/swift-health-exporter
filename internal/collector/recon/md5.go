@@ -136,7 +136,7 @@ func (t *MD5Task) Measure() (map[string]int, error) {
 			queries[q] = 1
 			e.Inner = err
 			e.CmdOutput = string(outputBlock)
-			logg.Debug(e.Error())
+			logg.Info(e.Error())
 			continue // to next output block
 		}
 
