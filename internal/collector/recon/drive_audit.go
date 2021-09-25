@@ -61,8 +61,8 @@ func (t *DriveAuditTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.auditErrors.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *DriveAuditTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *DriveAuditTask) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{

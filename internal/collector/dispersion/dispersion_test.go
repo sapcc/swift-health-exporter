@@ -22,7 +22,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/assert"
+
 	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
 func TestDispersionCollector(t *testing.T) {
@@ -32,11 +34,13 @@ func TestDispersionCollector(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	c := collector.New(0)
-	exitCode := GetTaskExitCodeTypedDesc(registry)
-	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
+	c := collector.New()
+	s := collector.NewScraper(0)
+	exitCode := GetTaskExitCodeGaugeVec(registry)
+	util.AddTask(true, c, s, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
 	registry.MustRegister(c)
 
+	s.UpdateAllMetrics()
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
@@ -52,11 +56,13 @@ func TestDispersionCollectorWithErrors(t *testing.T) {
 	}
 
 	registry := prometheus.NewPedanticRegistry()
-	c := collector.New(0)
-	exitCode := GetTaskExitCodeTypedDesc(registry)
-	c.AddTask(true, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
+	c := collector.New()
+	s := collector.NewScraper(0)
+	exitCode := GetTaskExitCodeGaugeVec(registry)
+	util.AddTask(true, c, s, NewReportTask(pathToExecutable, 20*time.Second), exitCode)
 	registry.MustRegister(c)
 
+	s.UpdateAllMetrics()
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

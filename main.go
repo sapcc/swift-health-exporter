@@ -31,6 +31,7 @@ import (
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
 	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
+	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
 func main() {
@@ -59,32 +60,40 @@ func main() {
 	}
 
 	registry := prometheus.NewRegistry()
-	collector := collector.New(3)
+	c := collector.New()
+	s := collector.NewScraper(3)
 
 	if *dispersionCollector {
 		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		exitCode := dispersion.GetTaskExitCodeTypedDesc(registry)
-		collector.AddTask(true, dispersion.NewReportTask(execPath, t), exitCode)
+		exitCode := dispersion.GetTaskExitCodeGaugeVec(registry)
+		util.AddTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
 	}
 
 	if reconCollector {
-		exitCode := recon.GetTaskExitCodeTypedDesc(registry)
+		exitCode := recon.GetTaskExitCodeGaugeVec(registry)
 		opts := &recon.TaskOpts{
 			PathToExecutable: getExecutablePath("SWIFT_RECON_PATH", "swift-recon"),
 			HostTimeout:      *reconHostTimeout,
 			CtxTimeout:       time.Duration(*reconTimeout) * time.Second,
 		}
-		collector.AddTask(*reconDiskUsageCollector, recon.NewDiskUsageTask(opts), exitCode)
-		collector.AddTask(*reconDriveAuditCollector, recon.NewDriveAuditTask(opts), exitCode)
-		collector.AddTask(!(*noReconMD5Collector), recon.NewMD5Task(opts), exitCode)
-		collector.AddTask(*reconQuarantinedCollector, recon.NewQuarantinedTask(opts), exitCode)
-		collector.AddTask(*reconReplicationCollector, recon.NewReplicationTask(opts), exitCode)
-		collector.AddTask(*reconUnmountedCollector, recon.NewUnmountedTask(opts), exitCode)
-		collector.AddTask(*reconUpdaterSweepTimeCollector, recon.NewUpdaterSweepTask(opts), exitCode)
+		util.AddTask(*reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
+		util.AddTask(*reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
+		util.AddTask(!(*noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
+		util.AddTask(*reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
+		util.AddTask(*reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		util.AddTask(*reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
+		util.AddTask(*reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
 
-	registry.MustRegister(collector)
+	registry.MustRegister(c)
+
+	// Run the scraper at least once so that the metric values are updated before a
+	// Prometheus scrape.
+	s.UpdateAllMetrics()
+
+	// Start scraper loop.
+	go s.Run()
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations

@@ -38,7 +38,7 @@ type UpdaterSweepTask struct {
 func NewUpdaterSweepTask(opts *TaskOpts) collector.Task {
 	return &UpdaterSweepTask{
 		opts: opts,
-		// <server-type> gets substituted in Measure().
+		// <server-type> gets substituted in UpdateMetrics().
 		cmdArgs: []string{
 			fmt.Sprintf("--timeout=%d", opts.HostTimeout), "<server-type>",
 			"--updater", "--verbose",
@@ -73,8 +73,8 @@ func (t *UpdaterSweepTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.objectTime.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *UpdaterSweepTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *UpdaterSweepTask) UpdateMetrics() (map[string]int, error) {
 	queries := make(map[string]int)
 	serverTypes := []string{"container", "object"}
 	for _, server := range serverTypes {

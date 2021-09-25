@@ -101,8 +101,8 @@ func (t *DiskUsageTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.fractionalUsageByDisk.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *DiskUsageTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{

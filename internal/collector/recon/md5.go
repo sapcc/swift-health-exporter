@@ -104,8 +104,8 @@ func (t *MD5Task) CollectMetrics(ch chan<- prometheus.Metric) {
 var md5OutputBlockRx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:(?:->|!!).*\n)*)\s*[0-9]+/[0-9]+ hosts matched, [0-9]+ error.*$`)
 
-// Measure implements the collector.Task interface.
-func (t *MD5Task) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *MD5Task) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{

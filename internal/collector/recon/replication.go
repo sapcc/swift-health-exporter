@@ -43,7 +43,7 @@ type ReplicationTask struct {
 func NewReplicationTask(opts *TaskOpts) collector.Task {
 	return &ReplicationTask{
 		opts: opts,
-		// <server-type> gets substituted in Measure().
+		// <server-type> gets substituted in UpdateMetrics().
 		cmdArgs: []string{
 			fmt.Sprintf("--timeout=%d", opts.HostTimeout), "<server-type>",
 			"--replication", "--verbose",
@@ -106,8 +106,8 @@ func (t *ReplicationTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.objectReplicationDuration.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *ReplicationTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
 	queries := make(map[string]int)
 	serverTypes := []string{"account", "container", "object"}
 	for _, server := range serverTypes {

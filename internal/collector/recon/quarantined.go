@@ -77,8 +77,8 @@ func (t *QuarantinedTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.objects.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *QuarantinedTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *QuarantinedTask) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{

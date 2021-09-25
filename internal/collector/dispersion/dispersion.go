@@ -25,27 +25,20 @@ import (
 	"github.com/sapcc/go-bits/logg"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
 	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
-// GetTaskExitCodeTypedDesc returns a TypedDesc for use with dispersion report tasks.
-func GetTaskExitCodeTypedDesc(r prometheus.Registerer) *promhelper.TypedDesc {
-	taskExitCodeGaugeVec := prometheus.NewGaugeVec(
+// GetTaskExitCodeGaugeVec returns a *prometheus.GaugeVec for use with dispersion report
+// tasks.
+func GetTaskExitCodeGaugeVec(r prometheus.Registerer) *prometheus.GaugeVec {
+	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "swift_dispersion_task_exit_code",
 			Help: "The exit code for a Swift dispersion report query execution.",
 		}, []string{"query"},
 	)
-	r.MustRegister(taskExitCodeGaugeVec)
-
-	descCh := make(chan *prometheus.Desc, 1)
-	taskExitCodeGaugeVec.Describe(descCh)
-	taskExitCodeGaugeDesc := <-descCh
-	return &promhelper.TypedDesc{
-		Desc:      taskExitCodeGaugeDesc,
-		ValueType: prometheus.GaugeValue,
-	}
+	r.MustRegister(gaugeVec)
+	return gaugeVec
 }
 
 // ReportTask implements the collector.Task interface.
@@ -156,8 +149,8 @@ func (t *ReportTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.objectOverlapping.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *ReportTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *ReportTask) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{

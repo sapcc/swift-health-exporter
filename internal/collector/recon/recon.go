@@ -18,8 +18,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/sapcc/swift-health-exporter/internal/promhelper"
 )
 
 // This value is overwritten in unit tests.
@@ -32,21 +30,14 @@ type TaskOpts struct {
 	CtxTimeout       time.Duration
 }
 
-// GetTaskExitCodeTypedDesc returns a TypedDesc for use with recon tasks.
-func GetTaskExitCodeTypedDesc(r prometheus.Registerer) *promhelper.TypedDesc {
-	taskExitCodeGaugeVec := prometheus.NewGaugeVec(
+// GetTaskExitCodeGaugeVec returns a *prometheus.GaugeVec for use with recon tasks.
+func GetTaskExitCodeGaugeVec(r prometheus.Registerer) *prometheus.GaugeVec {
+	gaugeVec := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "swift_recon_task_exit_code",
 			Help: "The exit code for a Swift Recon query execution.",
 		}, []string{"query"},
 	)
-	r.MustRegister(taskExitCodeGaugeVec)
-
-	descCh := make(chan *prometheus.Desc, 1)
-	taskExitCodeGaugeVec.Describe(descCh)
-	taskExitCodeGaugeDesc := <-descCh
-	return &promhelper.TypedDesc{
-		Desc:      taskExitCodeGaugeDesc,
-		ValueType: prometheus.GaugeValue,
-	}
+	r.MustRegister(gaugeVec)
+	return gaugeVec
 }

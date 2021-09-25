@@ -61,8 +61,8 @@ func (t *UnmountedTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.unmountedDrives.Collect(ch)
 }
 
-// Measure implements the collector.Task interface.
-func (t *UnmountedTask) Measure() (map[string]int, error) {
+// UpdateMetrics implements the collector.Task interface.
+func (t *UnmountedTask) UpdateMetrics() (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{
