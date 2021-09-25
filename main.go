@@ -37,6 +37,7 @@ func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
 	// In large Swift clusters the dispersion-report tool takes time, hence the longer timeout.
+	maxFailures := kingpin.Flag("collector.max-failures", "Max allowed failures for a specific collector").Default("4").Int()
 	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
 	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
@@ -60,7 +61,7 @@ func main() {
 
 	registry := prometheus.NewRegistry()
 	c := collector.New()
-	s := collector.NewScraper(3)
+	s := collector.NewScraper(*maxFailures)
 
 	if *dispersionCollector {
 		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")

@@ -43,7 +43,13 @@ these executables using the configuration options.
 
 ### Configuration options
 
-The following environment variables are recognized:
+When a particular collector fails once, `swift-health-exporter` will continue to report
+the metric values for it from the previous collection. A collection is considered to have
+failed and an error is only reported after the max failure attempts have been exceeded.
+
+You can change the value for the max failures using the `--collector.max-failures` flag.
+
+Additionally, the following environment variables are recognized:
 
 | Variable                       | Required                                                                      | Description                                                                               |
 | ----------------               | ----------------                                                              | ----------------                                                                          |
