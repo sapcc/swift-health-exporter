@@ -31,7 +31,6 @@ import (
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
 	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
-	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
 func main() {
@@ -67,7 +66,7 @@ func main() {
 		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
 		exitCode := dispersion.GetTaskExitCodeGaugeVec(registry)
-		util.AddTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
+		addTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
 	}
 
 	if reconCollector {
@@ -77,13 +76,13 @@ func main() {
 			HostTimeout:      *reconHostTimeout,
 			CtxTimeout:       time.Duration(*reconTimeout) * time.Second,
 		}
-		util.AddTask(*reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
-		util.AddTask(*reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
-		util.AddTask(!(*noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
-		util.AddTask(*reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
-		util.AddTask(*reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
-		util.AddTask(*reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
-		util.AddTask(*reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
+		addTask(*reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
+		addTask(*reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
+		addTask(!(*noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
+		addTask(*reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
+		addTask(*reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		addTask(*reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
+		addTask(*reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
 
 	registry.MustRegister(c)
@@ -144,5 +143,22 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write(pageBytes)
 	if err != nil {
 		logg.Error(err.Error())
+	}
+}
+
+// addTask adds a Task to the given Collector and the Scraper along
+// with its corresponding exit code GaugeVec.
+func addTask(
+	shouldAdd bool,
+	c *collector.Collector,
+	s *collector.Scraper,
+	t collector.Task,
+	exitCode *prometheus.GaugeVec) {
+
+	if shouldAdd {
+		name := t.Name()
+		c.Tasks[name] = t
+		s.Tasks[name] = t
+		s.ExitCodeGaugeVec[name] = exitCode
 	}
 }

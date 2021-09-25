@@ -21,7 +21,7 @@ import (
 )
 
 // This value is overwritten in unit tests.
-var isTest = false
+var IsTest = false
 
 // TaskOpts holds common parameters that are used by all recon tasks.
 type TaskOpts struct {

@@ -158,7 +158,7 @@ func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
 
 			l := prometheus.Labels{"storage_ip": hostname}
 			if data.ReplicationLast > 0 {
-				if isTest {
+				if IsTest {
 					currentTime = float64(timeNow().Second())
 				}
 				tDiff := currentTime - data.ReplicationLast

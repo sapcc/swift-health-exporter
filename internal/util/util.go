@@ -19,10 +19,6 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/sapcc/swift-health-exporter/internal/collector"
 )
 
 // RunCommandWithTimeout runs a command with the provided timeout duration and returns its
@@ -36,21 +32,4 @@ func RunCommandWithTimeout(timeout time.Duration, name string, args ...string) (
 // CmdArgsToStr returns a space separated string for cmdArgs.
 func CmdArgsToStr(cmdArgs []string) string {
 	return strings.Join(cmdArgs, " ")
-}
-
-// AddTask adds a Task to the given Collector and the Scraper along
-// with its corresponding exit code GaugeVec.
-func AddTask(
-	shouldAdd bool,
-	c *collector.Collector,
-	s *collector.Scraper,
-	t collector.Task,
-	exitCode *prometheus.GaugeVec) {
-
-	if shouldAdd {
-		name := t.Name()
-		c.Tasks[name] = t
-		s.Tasks[name] = t
-		s.ExitCodeGaugeVec[name] = exitCode
-	}
 }
