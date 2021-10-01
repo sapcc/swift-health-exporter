@@ -1,6 +1,6 @@
 # Swift health exporter
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sapcc/swift-health-exporter/Build%20and%20Test)](https://github.com/sapcc/swift-health-exporter/actions?query=workflow%3A%22Build+and+Test%22)
+[![CI](https://github.com/sapcc/swift-health-exporter/actions/workflows/ci.yaml/badge.svg)](https://github.com/sapcc/swift-health-exporter/actions/workflows/ci.yaml)
 [![Coverage Status](https://img.shields.io/coveralls/github/sapcc/swift-health-exporter)](https://coveralls.io/github/sapcc/swift-health-exporter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/sapcc/swift-health-exporter)](https://goreportcard.com/report/github.com/sapcc/swift-health-exporter)
 
@@ -43,7 +43,13 @@ these executables using the configuration options.
 
 ### Configuration options
 
-The following environment variables are recognized:
+When a particular collector fails once, `swift-health-exporter` will continue to report
+the metric values for it from the previous collection. A collection is considered to have
+failed and an error is only reported after the max failure attempts have been exceeded.
+
+You can change the value for the max failures using the `--collector.max-failures` flag.
+
+Additionally, the following environment variables are recognized:
 
 | Variable                       | Required                                                                      | Description                                                                               |
 | ----------------               | ----------------                                                              | ----------------                                                                          |

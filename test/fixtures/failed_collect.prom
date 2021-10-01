@@ -1,0 +1,143 @@
+# HELP swift_cluster_accounts_quarantined Quarantined accounts reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_quarantined gauge
+swift_cluster_accounts_quarantined{storage_ip="10.0.0.1"} 0
+# HELP swift_cluster_accounts_replication_age Account replication age reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_replication_age gauge
+swift_cluster_accounts_replication_age{storage_ip="10.0.0.1"} -1.579007236099724e+09
+# HELP swift_cluster_accounts_replication_duration Account replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_accounts_replication_duration gauge
+swift_cluster_accounts_replication_duration{storage_ip="10.0.0.1"} 23.422847032546997
+# HELP swift_cluster_containers_quarantined Quarantined containers reported by the swift-recon tool.
+# TYPE swift_cluster_containers_quarantined gauge
+swift_cluster_containers_quarantined{storage_ip="10.0.0.1"} 0
+# HELP swift_cluster_containers_replication_age Container replication age reported by the swift-recon tool.
+# TYPE swift_cluster_containers_replication_age gauge
+swift_cluster_containers_replication_age{storage_ip="10.0.0.1"} -1.579007235617117e+09
+# HELP swift_cluster_containers_replication_duration Container replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_containers_replication_duration gauge
+swift_cluster_containers_replication_duration{storage_ip="10.0.0.1"} 98.37576985359192
+# HELP swift_cluster_containers_updater_sweep_time Container updater sweep time reported by the swift-recon tool.
+# TYPE swift_cluster_containers_updater_sweep_time gauge
+swift_cluster_containers_updater_sweep_time{storage_ip="10.0.0.1"} 54.06525897979736
+# HELP swift_cluster_drives_audit_errors Drive audit errors reported by the swift-recon tool.
+# TYPE swift_cluster_drives_audit_errors gauge
+swift_cluster_drives_audit_errors{storage_ip="10.0.0.1"} 0
+# HELP swift_cluster_drives_unmounted Unmounted drives reported by the swift-recon tool.
+# TYPE swift_cluster_drives_unmounted gauge
+swift_cluster_drives_unmounted{storage_ip="10.0.0.1"} 0
+# HELP swift_cluster_md5_all Sum of matched-, not matched, and errored hosts while checking md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_all gauge
+swift_cluster_md5_all{kind="ring"} 4
+swift_cluster_md5_all{kind="swift.conf"} 4
+# HELP swift_cluster_md5_errors Error encountered while checking host for md5sum(s) as reported by the swift-recon tool.
+# TYPE swift_cluster_md5_errors gauge
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.2"} 1
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_errors{kind="ring",storage_ip="10.0.0.4"} 0
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.2"} 1
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_errors{kind="swift.conf",storage_ip="10.0.0.4"} 0
+# HELP swift_cluster_md5_matched Matched host for md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_matched gauge
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.1"} 1
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.3"} 1
+swift_cluster_md5_matched{kind="ring",storage_ip="10.0.0.4"} 0
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.1"} 1
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.3"} 1
+swift_cluster_md5_matched{kind="swift.conf",storage_ip="10.0.0.4"} 0
+# HELP swift_cluster_md5_not_matched Not matched host for md5sum(s) reported by the swift-recon tool.
+# TYPE swift_cluster_md5_not_matched gauge
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_not_matched{kind="ring",storage_ip="10.0.0.4"} 1
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.1"} 0
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.2"} 0
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.3"} 0
+swift_cluster_md5_not_matched{kind="swift.conf",storage_ip="10.0.0.4"} 1
+# HELP swift_cluster_objects_quarantined Quarantined objects reported by the swift-recon tool.
+# TYPE swift_cluster_objects_quarantined gauge
+swift_cluster_objects_quarantined{storage_ip="10.0.0.1"} 0
+# HELP swift_cluster_objects_replication_age Object replication age reported by the swift-recon tool.
+# TYPE swift_cluster_objects_replication_age gauge
+swift_cluster_objects_replication_age{storage_ip="10.0.0.1"} -1.57900646081673e+09
+# HELP swift_cluster_objects_replication_duration Object replication duration reported by the swift-recon tool.
+# TYPE swift_cluster_objects_replication_duration gauge
+swift_cluster_objects_replication_duration{storage_ip="10.0.0.1"} 5.449508202075958
+# HELP swift_cluster_objects_updater_sweep_time Object updater sweep time reported by the swift-recon tool.
+# TYPE swift_cluster_objects_updater_sweep_time gauge
+swift_cluster_objects_updater_sweep_time{storage_ip="10.0.0.1"} 1.863548994064331
+# HELP swift_cluster_storage_capacity_bytes Capacity storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_capacity_bytes gauge
+swift_cluster_storage_capacity_bytes 8.3986504433664e+13
+# HELP swift_cluster_storage_free_bytes Free storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_free_bytes gauge
+swift_cluster_storage_free_bytes 7.8765751533568e+13
+# HELP swift_cluster_storage_used_bytes Used storage bytes as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_bytes gauge
+swift_cluster_storage_used_bytes 5.220752900096e+12
+# HELP swift_cluster_storage_used_percent Fractional usage as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_percent gauge
+swift_cluster_storage_used_percent 0.062161807248682026
+# HELP swift_cluster_storage_used_percent_by_disk Fractional usage of a disk as reported by the swift-recon tool.
+# TYPE swift_cluster_storage_used_percent_by_disk gauge
+swift_cluster_storage_used_percent_by_disk{disk="sdb01",storage_ip="10.0.0.1"} 0.06287556088217618
+swift_cluster_storage_used_percent_by_disk{disk="sdb02",storage_ip="10.0.0.1"} 0.06114153765139595
+swift_cluster_storage_used_percent_by_disk{disk="sdb03",storage_ip="10.0.0.1"} 0.060846766709053014
+swift_cluster_storage_used_percent_by_disk{disk="sdb04",storage_ip="10.0.0.1"} 0.06247550445917624
+swift_cluster_storage_used_percent_by_disk{disk="sdb05",storage_ip="10.0.0.1"} 0.0636920166631899
+swift_cluster_storage_used_percent_by_disk{disk="sdb06",storage_ip="10.0.0.1"} 0.06184825898097433
+swift_cluster_storage_used_percent_by_disk{disk="sdb07",storage_ip="10.0.0.1"} 0.06449695878640205
+swift_cluster_storage_used_percent_by_disk{disk="sdb08",storage_ip="10.0.0.1"} 0.06037474702299367
+swift_cluster_storage_used_percent_by_disk{disk="sdb09",storage_ip="10.0.0.1"} 0.06453964869569374
+swift_cluster_storage_used_percent_by_disk{disk="sdb10",storage_ip="10.0.0.1"} 0.061613682968306
+swift_cluster_storage_used_percent_by_disk{disk="sdb11",storage_ip="10.0.0.1"} 0.061911459492196855
+swift_cluster_storage_used_percent_by_disk{disk="sdb12",storage_ip="10.0.0.1"} 0.06452540666354745
+swift_cluster_storage_used_percent_by_disk{disk="sdb13",storage_ip="10.0.0.1"} 0.061085069997884475
+swift_cluster_storage_used_percent_by_disk{disk="sdb14",storage_ip="10.0.0.1"} 0.05883868250855854
+# HELP swift_dispersion_container_copies_expected Expected container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_expected gauge
+swift_dispersion_container_copies_expected 120
+# HELP swift_dispersion_container_copies_found Found container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_found gauge
+swift_dispersion_container_copies_found 110
+# HELP swift_dispersion_container_copies_missing Missing container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_copies_missing gauge
+swift_dispersion_container_copies_missing 10
+# HELP swift_dispersion_container_overlapping Expected container copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_container_overlapping gauge
+swift_dispersion_container_overlapping 0
+# HELP swift_dispersion_errors The number of errors in the Swift dispersion report.
+# TYPE swift_dispersion_errors gauge
+swift_dispersion_errors 8
+# HELP swift_dispersion_object_copies_expected Expected object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_expected gauge
+swift_dispersion_object_copies_expected 1965
+# HELP swift_dispersion_object_copies_found Found object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_found gauge
+swift_dispersion_object_copies_found 1900
+# HELP swift_dispersion_object_copies_missing Missing object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_copies_missing gauge
+swift_dispersion_object_copies_missing 65
+# HELP swift_dispersion_object_overlapping Expected object copies reported by the swift-dispersion-report tool.
+# TYPE swift_dispersion_object_overlapping gauge
+swift_dispersion_object_overlapping 0
+# HELP swift_dispersion_task_exit_code The exit code for a Swift dispersion report query execution.
+# TYPE swift_dispersion_task_exit_code gauge
+swift_dispersion_task_exit_code{query="--dump-json"} 1
+# HELP swift_recon_task_exit_code The exit code for a Swift Recon query execution.
+# TYPE swift_recon_task_exit_code gauge
+swift_recon_task_exit_code{query="--timeout=1 --diskusage --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 --driveaudit --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 --md5 --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 --quarantined --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 --unmounted --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 account --replication --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 container --replication --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 container --updater --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 object --replication --verbose"} 1
+swift_recon_task_exit_code{query="--timeout=1 object --updater --verbose"} 1

@@ -28,14 +28,16 @@ import (
 	"github.com/sapcc/go-bits/logg"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/sapcc/swift-health-exporter/internal/dispersion"
-	"github.com/sapcc/swift-health-exporter/internal/recon"
+	"github.com/sapcc/swift-health-exporter/internal/collector"
+	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
+	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
 )
 
 func main() {
 	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
 
 	// In large Swift clusters the dispersion-report tool takes time, hence the longer timeout.
+	maxFailures := kingpin.Flag("collector.max-failures", "Max allowed failures for a specific collector").Default("4").Int()
 	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
 	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
 	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
@@ -57,35 +59,48 @@ func main() {
 		logg.Fatal("no collector enabled")
 	}
 
+	registry := prometheus.NewRegistry()
+	c := collector.New()
+	s := collector.NewScraper(*maxFailures)
+
 	if *dispersionCollector {
-		swiftDispersionReportPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
+		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
 		t := time.Duration(*dispersionTimeout) * time.Second
-		prometheus.MustRegister(dispersion.NewCollector(swiftDispersionReportPath, t))
+		exitCode := dispersion.GetTaskExitCodeGaugeVec(registry)
+		addTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
 	}
 
 	if reconCollector {
-		swiftReconPath := getExecutablePath("SWIFT_RECON_PATH", "swift-recon")
-		t := time.Duration(*reconTimeout) * time.Second
-		prometheus.MustRegister(recon.NewCollector(swiftReconPath, recon.CollectorOpts{
-			IsTest:               false,
-			WithDiskUsage:        *reconDiskUsageCollector,
-			WithDriveAudit:       *reconDriveAuditCollector,
-			WithMD5:              !(*noReconMD5Collector),
-			WithQuarantined:      *reconQuarantinedCollector,
-			WithReplication:      *reconReplicationCollector,
-			WithUnmounted:        *reconUnmountedCollector,
-			WithUpdaterSweepTime: *reconUpdaterSweepTimeCollector,
-			HostTimeout:          *reconHostTimeout,
-			CtxTimeout:           t,
-		}))
+		exitCode := recon.GetTaskExitCodeGaugeVec(registry)
+		opts := &recon.TaskOpts{
+			PathToExecutable: getExecutablePath("SWIFT_RECON_PATH", "swift-recon"),
+			HostTimeout:      *reconHostTimeout,
+			CtxTimeout:       time.Duration(*reconTimeout) * time.Second,
+		}
+		addTask(*reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
+		addTask(*reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
+		addTask(!(*noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
+		addTask(*reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
+		addTask(*reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		addTask(*reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
+		addTask(*reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
+
+	registry.MustRegister(c)
+
+	// Run the scraper at least once so that the metric values are updated before a
+	// Prometheus scrape.
+	s.UpdateAllMetrics()
+
+	// Start scraper loop.
+	go s.Run()
 
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", landingPageHandler)
-	mux.Handle("/metrics", promhttp.Handler())
+	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
 	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
@@ -129,5 +144,22 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write(pageBytes)
 	if err != nil {
 		logg.Error(err.Error())
+	}
+}
+
+// addTask adds a Task to the given Collector and the Scraper along
+// with its corresponding exit code GaugeVec.
+func addTask(
+	shouldAdd bool,
+	c *collector.Collector,
+	s *collector.Scraper,
+	t collector.Task,
+	exitCode *prometheus.GaugeVec) {
+
+	if shouldAdd {
+		name := t.Name()
+		c.Tasks[name] = t
+		s.Tasks[name] = t
+		s.ExitCodeGaugeVec[name] = exitCode
 	}
 }
