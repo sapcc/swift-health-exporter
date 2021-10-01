@@ -46,8 +46,14 @@ func NewScraper(maxFailures int) *Scraper {
 // Run updates the metrics for all tasks periodically as per the scrapeInterval.
 func (s *Scraper) Run() {
 	for {
+		startedAt := time.Now()
 		s.UpdateAllMetrics()
-		time.Sleep(scrapeInterval)
+		// Slow down if UpdateAllMetrics() finished faster than the desired scrape
+		// interval.
+		sleepDuration := scrapeInterval - time.Since(startedAt)
+		if sleepDuration > 0 {
+			time.Sleep(sleepDuration)
+		}
 	}
 }
 
