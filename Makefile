@@ -19,8 +19,8 @@ build/cover.out: build-all
 build-all: build/swift-health-exporter build/mock-swift-dispersion-report build/mock-swift-dispersion-report-with-errors build/mock-swift-recon build/mock-swift-recon-with-errors
 
 GO_BUILDFLAGS = -mod vendor
-GO_LDFLAGS = 
-GO_TESTENV = 
+GO_LDFLAGS =
+GO_TESTENV =
 
 build/swift-health-exporter: FORCE
 	go build $(GO_BUILDFLAGS) -ldflags '-s -w $(GO_LDFLAGS)' -o build/swift-health-exporter .
@@ -54,7 +54,7 @@ GO_ALLFILES := $(addsuffix /*.go,$(patsubst $(shell go list .)%,.%,$(shell go li
 # which packages to test with "go test"
 GO_TESTPKGS := $(shell go list -f '{{if or .TestGoFiles .XTestGoFiles}}{{.ImportPath}}{{end}}' ./...)
 # which packages to measure coverage for
-GO_COVERPKGS := $(shell go list ./... | grep -E '/collector')
+GO_COVERPKGS := $(shell go list ./... | command grep -E '/collector')
 # to get around weird Makefile syntax restrictions, we need variables containing a space and comma
 space := $(null) $(null)
 comma := ,
@@ -64,10 +64,22 @@ check: build-all static-check build/cover.html FORCE
 
 static-check: FORCE
 	@if ! hash staticcheck 2>/dev/null; then printf "\e[1;36m>> Installing staticcheck...\e[0m\n"; go install honnef.co/go/tools/cmd/staticcheck@latest; fi
+	@if ! hash exportloopref 2>/dev/null; then printf "\e[1;36m>> Installing exportloopref...\e[0m\n"; go install github.com/kyoh86/exportloopref/cmd/exportloopref@latest; fi
+	@if ! hash rowserrcheck 2>/dev/null; then printf "\e[1;36m>> Installing exportloopref...\e[0m\n"; go install github.com/jingyugao/rowserrcheck@latest; fi
+	@if ! hash unconvert 2>/dev/null; then printf "\e[1;36m>> Installing unparam...\e[0m\n"; go install github.com/mdempsky/unconvert@latest; fi
+	@if ! hash unparam 2>/dev/null; then printf "\e[1;36m>> Installing unparam...\e[0m\n"; go install mvdan.cc/unparam@latest; fi
 	@printf "\e[1;36m>> gofmt\e[0m\n"
 	@if s="$$(gofmt -s -d $(GO_ALLFILES) 2>/dev/null)" && test -n "$$s"; then echo "$$s"; false; fi
 	@printf "\e[1;36m>> staticcheck\e[0m\n"
 	@staticcheck -checks 'inherit,-ST1015' $(GO_ALLPKGS)
+	@printf "\e[1;36m>> exportloopref\e[0m\n"
+	@exportloopref $(GO_ALLPKGS)
+	@printf "\e[1;36m>> rowserrcheck\e[0m\n"
+	@rowserrcheck $(GO_ALLPKGS)
+	@printf "\e[1;36m>> unconvert\e[0m\n"
+	@unconvert $(GO_ALLPKGS)
+	@printf "\e[1;36m>> unparam\e[0m\n"
+	@unparam $(GO_ALLPKGS)
 	@printf "\e[1;36m>> go vet\e[0m\n"
 	@go vet $(GO_BUILDFLAGS) $(GO_ALLPKGS)
 
