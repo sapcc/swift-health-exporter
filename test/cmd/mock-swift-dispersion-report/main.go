@@ -29,6 +29,6 @@ func main() {
 	dumpJSONFlag := kingpin.Flag("dump-json", "Dump dispersion report in json format.").Short('j').Required().Bool()
 	kingpin.Parse()
 	if *dumpJSONFlag {
-		os.Stdout.Write([]byte(reportData))
+		os.Stdout.Write(reportData)
 	}
 }
