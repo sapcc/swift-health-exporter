@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/prometheus/client_golang v1.11.0
-	github.com/sapcc/go-bits v0.0.0-20210518135053-8a9465bb1339
+	github.com/sapcc/go-bits v0.0.0-20211126202514-08dd631513c2
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
@@ -18,6 +18,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.31.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/sergi/go-diff v1.2.0 // indirect
 	golang.org/x/sys v0.0.0-20210925032602-92d5a993a665 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )

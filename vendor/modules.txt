@@ -39,12 +39,15 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/sapcc/go-bits v0.0.0-20210518135053-8a9465bb1339
-## explicit; go 1.12
+# github.com/sapcc/go-bits v0.0.0-20211126202514-08dd631513c2
+## explicit; go 1.17
 github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpee
 github.com/sapcc/go-bits/httpext
 github.com/sapcc/go-bits/logg
+# github.com/sergi/go-diff v1.2.0
+## explicit; go 1.12
+github.com/sergi/go-diff/diffmatchpatch
 # golang.org/x/sys v0.0.0-20210925032602-92d5a993a665
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
