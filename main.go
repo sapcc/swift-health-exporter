@@ -19,71 +19,78 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"time"
 
+	"github.com/alecthomas/kong"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-bits/httpee"
 	"github.com/sapcc/go-bits/logg"
-	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
 	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
 )
 
+var cli struct {
+	Debug bool `env:"DEBUG" help:"Enable debug mode."`
+
+	MaxFailures int `name:"collector.max-failures" default:"4" help:"Max allowed failures for a specific collector."`
+
+	// In large Swift clusters the dispersion-report tool takes time, therefore we have a higher default timeout value.
+	DispersionTimeout   int64 `name:"dispersion.timeout" default:"20" help:"Timeout value (in seconds) for the context that is used while executing the swift-dispersion-report command."`
+	DispersionCollector bool  `name:"collector.dispersion" help:"Enable dispersion collector."`
+
+	ReconTimeout                   int64 `name:"recon.timeout" default:"4" help:"Timeout value (in seconds) for the context that is used while executing the swift-recon command."`
+	ReconHostTimeout               int   `name:"recon.timeout-host" default:"1" help:"Timeout value (in seconds) that is used for the '--timeout' flag (host timeout) of the swift-recon command."`
+	NoReconMD5Collector            bool  `name:"no-collector.recon.md5" help:"Disable MD5 collector."`
+	ReconDiskUsageCollector        bool  `name:"collector.recon.diskusage" help:"Enable disk usage collector."`
+	ReconDriveAuditCollector       bool  `name:"collector.recon.driveaudit" help:"Enable drive audit collector."`
+	ReconQuarantinedCollector      bool  `name:"collector.recon.quarantined" help:"Enable quarantined collector."`
+	ReconReplicationCollector      bool  `name:"collector.recon.replication" help:"Enable replication collector."`
+	ReconUnmountedCollector        bool  `name:"collector.recon.unmounted" help:"Enable unmounted collector."`
+	ReconUpdaterSweepTimeCollector bool  `name:"collector.recon.updater_sweep_time" help:"Enable updater sweep time collector."`
+}
+
 func main() {
-	logg.ShowDebug, _ = strconv.ParseBool(os.Getenv("DEBUG"))
+	kong.Parse(&cli)
+	reconCollectorEnabled := !(cli.NoReconMD5Collector) ||
+		cli.ReconDiskUsageCollector ||
+		cli.ReconDriveAuditCollector ||
+		cli.ReconQuarantinedCollector ||
+		cli.ReconReplicationCollector ||
+		cli.ReconUnmountedCollector ||
+		cli.ReconUpdaterSweepTimeCollector
 
-	// In large Swift clusters the dispersion-report tool takes time, hence the longer timeout.
-	maxFailures := kingpin.Flag("collector.max-failures", "Max allowed failures for a specific collector").Default("4").Int()
-	dispersionTimeout := kingpin.Flag("dispersion.timeout", "The swift-dispersion-report command context timeout value (in seconds).").Default("20").Int64()
-	dispersionCollector := kingpin.Flag("collector.dispersion", "Enable dispersion collector.").Bool()
-	reconTimeout := kingpin.Flag("recon.timeout", "The swift-recon command context timeout value (in seconds).").Default("4").Int64()
-	reconHostTimeout := kingpin.Flag("recon.timeout-host", "The swift-recon host timeout value (in seconds).").Default("1").Int()
-	noReconMD5Collector := kingpin.Flag("no-collector.recon.md5", "Disable MD5 collector.").Bool()
-	reconDiskUsageCollector := kingpin.Flag("collector.recon.diskusage", "Enable disk usage collector.").Bool()
-	reconDriveAuditCollector := kingpin.Flag("collector.recon.driveaudit", "Enable drive audit collector.").Bool()
-	reconQuarantinedCollector := kingpin.Flag("collector.recon.quarantined", "Enable quarantined collector.").Bool()
-	reconReplicationCollector := kingpin.Flag("collector.recon.replication", "Enable replication collector.").Bool()
-	reconUnmountedCollector := kingpin.Flag("collector.recon.unmounted", "Enable unmounted collector.").Bool()
-	reconUpdaterSweepTimeCollector := kingpin.Flag("collector.recon.updater_sweep_time", "Enable updater sweep time collector.").Bool()
-
-	kingpin.Parse()
-
-	reconCollector := *reconDiskUsageCollector || *reconDriveAuditCollector || !(*noReconMD5Collector) ||
-		*reconQuarantinedCollector || *reconReplicationCollector || *reconUnmountedCollector || *reconUpdaterSweepTimeCollector
-
-	if !reconCollector && !(*dispersionCollector) {
+	if !reconCollectorEnabled && !(cli.DispersionCollector) {
 		logg.Fatal("no collector enabled")
 	}
 
 	registry := prometheus.NewRegistry()
 	c := collector.New()
-	s := collector.NewScraper(*maxFailures)
+	s := collector.NewScraper(cli.MaxFailures)
 
-	if *dispersionCollector {
+	if cli.DispersionCollector {
 		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
-		t := time.Duration(*dispersionTimeout) * time.Second
+		t := time.Duration(cli.DispersionTimeout) * time.Second
 		exitCode := dispersion.GetTaskExitCodeGaugeVec(registry)
 		addTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
 	}
 
-	if reconCollector {
+	if reconCollectorEnabled {
 		exitCode := recon.GetTaskExitCodeGaugeVec(registry)
 		opts := &recon.TaskOpts{
 			PathToExecutable: getExecutablePath("SWIFT_RECON_PATH", "swift-recon"),
-			HostTimeout:      *reconHostTimeout,
-			CtxTimeout:       time.Duration(*reconTimeout) * time.Second,
+			HostTimeout:      cli.ReconHostTimeout,
+			CtxTimeout:       time.Duration(cli.ReconTimeout) * time.Second,
 		}
-		addTask(*reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
-		addTask(*reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
-		addTask(!(*noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
-		addTask(*reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
-		addTask(*reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
-		addTask(*reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
-		addTask(*reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
+		addTask(cli.ReconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
+		addTask(cli.ReconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
+		addTask(!(cli.NoReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
+		addTask(cli.ReconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
+		addTask(cli.ReconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		addTask(cli.ReconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
+		addTask(cli.ReconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
 
 	registry.MustRegister(c)
