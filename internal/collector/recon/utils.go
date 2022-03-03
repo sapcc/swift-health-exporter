@@ -33,12 +33,12 @@ func timeNow() time.Time {
 	return time.Unix(clockSeconds, 0).UTC()
 }
 
-// flexibleUint64 is used for fields that are sometimes missing, sometimes an
-// integer, sometimes a string.
-type flexibleUint64 uint64
+// flexibleFloat64 is used for fields that are sometimes missing, sometimes an
+// integer/float, and sometimes a string.
+type flexibleFloat64 float64
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (value *flexibleUint64) UnmarshalJSON(b []byte) error {
+func (value *flexibleFloat64) UnmarshalJSON(b []byte) error {
 	if string(b) == "null" {
 		*value = 0
 		return nil
@@ -50,15 +50,21 @@ func (value *flexibleUint64) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
+
+		if str == "None" {
+			*value = -1
+			return nil
+		}
+
 		// We don't care about the error here, default value of 0 is ok.
-		v, _ := strconv.ParseUint(str, 10, 64)
-		*value = flexibleUint64(v)
+		v, _ := strconv.ParseFloat(str, 64)
+		*value = flexibleFloat64(v)
 		return nil
 	}
 
-	var v uint64
+	var v float64
 	err := json.Unmarshal(b, &v)
-	*value = flexibleUint64(v)
+	*value = flexibleFloat64(v)
 	return err
 }
 
@@ -87,6 +93,7 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		data = bytes.ReplaceAll(data, []byte(`'`), []byte(`"`))
 		data = bytes.ReplaceAll(data, []byte(`True`), []byte(`true`))
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
+		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
 
 		result[hostname] = data
 	}

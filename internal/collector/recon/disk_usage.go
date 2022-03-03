@@ -117,14 +117,14 @@ func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 		return queries, e
 	}
 
-	var totalFree, totalUsed, totalSize flexibleUint64
+	var totalFree, totalUsed, totalSize flexibleFloat64
 	for hostname, dataBytes := range outputPerHost {
 		var disksData []struct {
-			Device  string         `json:"device"`
-			Avail   flexibleUint64 `json:"avail"`
-			Mounted bool           `json:"mounted"`
-			Used    flexibleUint64 `json:"used"`
-			Size    flexibleUint64 `json:"size"`
+			Device  string          `json:"device"`
+			Avail   flexibleFloat64 `json:"avail"`
+			Mounted bool            `json:"mounted"`
+			Used    flexibleFloat64 `json:"used"`
+			Size    flexibleFloat64 `json:"size"`
 		}
 		err := json.Unmarshal(dataBytes, &disksData)
 		if err != nil {

@@ -131,6 +131,7 @@ var accountReplVerboseData = []byte(`===========================================
 [2019-12-30 00:11:16] Checking on replication
 -> http://10.0.0.1:6002/recon/replication/account: {u'replication_last': 1577664676.578959, u'replication_stats': {u'no_change': 1223, u'rsync': 0, u'success': 1226, u'failure': 0, u'attempted': 613, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 3, u'start': 1577664663.576819, u'empty': 0}, u'replication_time': 13.002140045166016}
 -> http://10.0.0.2:6002/recon/replication/account: {u'replication_last': 1577664668.9851, u'replication_stats': {u'no_change': 1221, u'rsync': 0, u'success': 1222, u'failure': 0, u'attempted': 611, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 1, u'start': 1577664656.767887, u'empty': 0}, u'replication_time': 12.217212915420532}
+-> http://10.0.0.3:6002/recon/replication/account: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 0, high: 0, avg: 0.0, total: 0, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 1222, high: 1226, avg: 1224.0, total: 2448, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 12, high: 13, avg: 12.6, total: 25, Failed: 0.0%, no_result: 0, reported: 2
@@ -145,6 +146,7 @@ var containerReplVerboseData = []byte(`=========================================
 [2019-12-30 00:10:09] Checking on replication
 -> http://10.0.0.1:6001/recon/replication/container: {u'replication_last': 1577664528.691438, u'replication_stats': {u'no_change': 8298, u'rsync': 0, u'success': 8300, u'failure': 0, u'attempted': 4150, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 2, u'start': 1577664444.899301, u'empty': 0}, u'replication_time': 83.79213690757751}
 -> http://10.0.0.2:6001/recon/replication/container: {u'replication_last': 1577664555.743305, u'replication_stats': {u'no_change': 8307, u'rsync': 0, u'success': 8308, u'failure': 0, u'attempted': 4154, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 1, u'start': 1577664469.557067, u'empty': 0}, u'replication_time': 86.18623805046082}
+-> http://10.0.0.3:6002/recon/replication/container: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 0, high: 0, avg: 0.0, total: 0, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 8300, high: 8308, avg: 8304.0, total: 16608, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 83, high: 86, avg: 85.0, total: 169, Failed: 0.0%, no_result: 0, reported: 2
@@ -159,6 +161,7 @@ var objectReplVerboseData = []byte(`============================================
 [2019-12-30 00:08:54] Checking on replication
 -> http://10.0.0.1:6000/recon/replication/object: {u'replication_last': 1577664310.620143, u'replication_stats': {u'rsync': 9, u'success': 196599, u'failure': 9, u'attempted': 98304, u'remove': 0, u'suffix_count': 1258927, u'start': 1535617859.516976, u'hashmatch': 196599, u'failure_nodes': {u'10.0.0.1': {u'sdb-09': 3}, u'10.0.0.2': {u'sdb-08': 6}}, u'suffix_sync': 0, u'suffix_hash': 2}, u'replication_time': 4.6007425824801125, u'object_replication_last': 1577664310.620143, u'object_replication_time': 4.6007425824801125}
 -> http://10.0.0.2:6000/recon/replication/object: {u'replication_last': 1577664316.719913, u'replication_stats': {u'rsync': 12, u'success': 196596, u'failure': 12, u'attempted': 98304, u'remove': 0, u'suffix_count': 1258168, u'start': 1535618096.714857, u'hashmatch': 196596, u'failure_nodes': {u'10.0.0.1': {u'sdb-13': 1, u'sdb-01': 1, u'sdb-02': 1, u'sdb-09': 4}, u'10.0.0.2': {u'sdb-06': 1, u'sdb-13': 1, u'sdb-08': 3}}, u'suffix_sync': 0, u'suffix_hash': 1}, u'replication_time': 4.947240881125132, u'object_replication_last': 1577664316.719913, u'object_replication_time': 4.947240881125132}
+-> http://10.0.0.3:6002/recon/replication/object: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 9, high: 12, avg: 10.5, total: 21, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 196596, high: 196599, avg: 196597.5, total: 393195, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 4, high: 4, avg: 4.8, total: 9, Failed: 0.0%, no_result: 0, reported: 2
