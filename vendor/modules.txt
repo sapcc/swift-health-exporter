@@ -1,10 +1,6 @@
-# github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
-## explicit
-github.com/alecthomas/template
-github.com/alecthomas/template/parse
-# github.com/alecthomas/units v0.0.0-20210912230133-d1bdfacee922
-## explicit; go 1.15
-github.com/alecthomas/units
+# github.com/alecthomas/kong v0.4.1
+## explicit; go 1.13
+github.com/alecthomas/kong
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
@@ -21,7 +17,10 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 ## explicit
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/prometheus/client_golang v1.11.0
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
+# github.com/prometheus/client_golang v1.12.1
 ## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
@@ -29,7 +28,7 @@ github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 ## explicit; go 1.9
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.31.0
+# github.com/prometheus/common v0.32.1
 ## explicit; go 1.13
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
@@ -39,7 +38,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/sapcc/go-bits v0.0.0-20211126202514-08dd631513c2
+# github.com/sapcc/go-bits v0.0.0-20220302101827-fefae78b93a0
 ## explicit; go 1.17
 github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpee
@@ -48,7 +47,7 @@ github.com/sapcc/go-bits/logg
 # github.com/sergi/go-diff v1.2.0
 ## explicit; go 1.12
 github.com/sergi/go-diff/diffmatchpatch
-# golang.org/x/sys v0.0.0-20210925032602-92d5a993a665
+# golang.org/x/sys v0.0.0-20220209214540-3681064d5158
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -85,6 +84,3 @@ google.golang.org/protobuf/types/descriptorpb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
-# gopkg.in/alecthomas/kingpin.v2 v2.2.6
-## explicit
-gopkg.in/alecthomas/kingpin.v2

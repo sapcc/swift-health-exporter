@@ -143,8 +143,8 @@ func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
 
 		for hostname, dataBytes := range outputPerHost {
 			var data struct {
-				ReplicationLast float64 `json:"replication_last"`
-				ReplicationTime float64 `json:"replication_time"`
+				ReplicationLast flexibleFloat64 `json:"replication_last"`
+				ReplicationTime flexibleFloat64 `json:"replication_time"`
 			}
 			err := json.Unmarshal(dataBytes, &data)
 			if err != nil {
@@ -161,10 +161,10 @@ func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
 				if IsTest {
 					currentTime = float64(timeNow().Second())
 				}
-				tDiff := currentTime - data.ReplicationLast
+				tDiff := currentTime - float64(data.ReplicationLast)
 				ageTypedDesc.With(l).Set(tDiff)
 			}
-			durTypedDesc.With(l).Set(data.ReplicationTime)
+			durTypedDesc.With(l).Set(float64(data.ReplicationTime))
 		}
 	}
 

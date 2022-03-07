@@ -17,33 +17,35 @@ package main
 import (
 	"os"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kong"
 )
 
-func main() {
-	serverTypeArg := kingpin.Arg("server-type", "Type of server.").Enum("account", "container", "object")
-	_ = kingpin.Flag("timeout", "Time to wait for a response from a server.").Short('t').Int()
-	verboseFlag := kingpin.Flag("verbose", "Print verbose info.").Short('v').Bool()
-	diskUsageFlag := kingpin.Flag("diskusage", "Get disk usage stats.").Short('d').Bool()
-	driveAuditFlag := kingpin.Flag("driveaudit", "Get drive audit error stats.").Bool()
-	md5Flag := kingpin.Flag("md5", "Get md5sum of servers ring and compare to local copy.").Bool()
-	quarantinedFlag := kingpin.Flag("quarantined", "Get cluster quarantine stats.").Short('q').Bool()
-	replicationFlag := kingpin.Flag("replication", "Get replication stats.").Short('r').Bool()
-	unmountedFlag := kingpin.Flag("unmounted", "Check cluster for unmounted devices.").Short('u').Bool()
-	updaterFlag := kingpin.Flag("updater", "Get updater stats.").Bool()
+var cli struct {
+	Timeout     int    `short:"t" help:"Time to wait for a response from a server."`
+	ServerType  string `arg:"" optional:"" help:"Type of server."`
+	Verbose     bool   `short:"v" help:"Print verbose info."`
+	Diskusage   bool   `short:"d" name:"diskusage" help:"Get disk usage stats."`
+	Driveaudit  bool   `name:"driveaudit" help:"Get drive audit error stats."`
+	MD5         bool   `name:"md5" help:"Get md5sum of servers ring and compare to local copy."`
+	Quarantined bool   `short:"q" help:"Get cluster quarantine stats."`
+	Replication bool   `short:"r" help:"Get replication stats."`
+	Unmounted   bool   `short:"u" help:"Check cluster for unmounted devices."`
+	Updater     bool   `help:"Get updater stats."`
+}
 
-	kingpin.Parse()
+func main() {
+	kong.Parse(&cli)
 	switch {
-	case *diskUsageFlag && *verboseFlag:
+	case cli.Diskusage && cli.Verbose:
 		os.Stdout.Write(diskUsageVerboseData)
-	case *driveAuditFlag && *verboseFlag:
+	case cli.Driveaudit && cli.Verbose:
 		os.Stdout.Write(driveAuditVerboseData)
-	case *md5Flag && *verboseFlag:
+	case cli.MD5 && cli.Verbose:
 		os.Stdout.Write(md5Data)
-	case *quarantinedFlag && *verboseFlag:
+	case cli.Quarantined && cli.Verbose:
 		os.Stdout.Write(quarantinedVerboseData)
-	case *replicationFlag && *verboseFlag:
-		switch *serverTypeArg {
+	case cli.Replication && cli.Verbose:
+		switch cli.ServerType {
 		case "account":
 			os.Stdout.Write(accountReplVerboseData)
 		case "container":
@@ -51,10 +53,10 @@ func main() {
 		case "object":
 			os.Stdout.Write(objectReplVerboseData)
 		}
-	case *unmountedFlag && *verboseFlag:
+	case cli.Unmounted && cli.Verbose:
 		os.Stdout.Write(unmountedVerboseData)
-	case *updaterFlag && *verboseFlag:
-		switch *serverTypeArg {
+	case cli.Updater && cli.Verbose:
+		switch cli.ServerType {
 		case "container":
 			os.Stdout.Write(containerUpdaterVerboseData)
 		case "object":
@@ -129,6 +131,7 @@ var accountReplVerboseData = []byte(`===========================================
 [2019-12-30 00:11:16] Checking on replication
 -> http://10.0.0.1:6002/recon/replication/account: {u'replication_last': 1577664676.578959, u'replication_stats': {u'no_change': 1223, u'rsync': 0, u'success': 1226, u'failure': 0, u'attempted': 613, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 3, u'start': 1577664663.576819, u'empty': 0}, u'replication_time': 13.002140045166016}
 -> http://10.0.0.2:6002/recon/replication/account: {u'replication_last': 1577664668.9851, u'replication_stats': {u'no_change': 1221, u'rsync': 0, u'success': 1222, u'failure': 0, u'attempted': 611, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 1, u'start': 1577664656.767887, u'empty': 0}, u'replication_time': 12.217212915420532}
+-> http://10.0.0.3:6002/recon/replication/account: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 0, high: 0, avg: 0.0, total: 0, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 1222, high: 1226, avg: 1224.0, total: 2448, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 12, high: 13, avg: 12.6, total: 25, Failed: 0.0%, no_result: 0, reported: 2
@@ -143,6 +146,7 @@ var containerReplVerboseData = []byte(`=========================================
 [2019-12-30 00:10:09] Checking on replication
 -> http://10.0.0.1:6001/recon/replication/container: {u'replication_last': 1577664528.691438, u'replication_stats': {u'no_change': 8298, u'rsync': 0, u'success': 8300, u'failure': 0, u'attempted': 4150, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 2, u'start': 1577664444.899301, u'empty': 0}, u'replication_time': 83.79213690757751}
 -> http://10.0.0.2:6001/recon/replication/container: {u'replication_last': 1577664555.743305, u'replication_stats': {u'no_change': 8307, u'rsync': 0, u'success': 8308, u'failure': 0, u'attempted': 4154, u'ts_repl': 0, u'remove': 0, u'remote_merge': 0, u'diff_capped': 0, u'deferred': 0, u'hashmatch': 0, u'diff': 1, u'start': 1577664469.557067, u'empty': 0}, u'replication_time': 86.18623805046082}
+-> http://10.0.0.3:6002/recon/replication/container: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 0, high: 0, avg: 0.0, total: 0, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 8300, high: 8308, avg: 8304.0, total: 16608, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 83, high: 86, avg: 85.0, total: 169, Failed: 0.0%, no_result: 0, reported: 2
@@ -157,6 +161,7 @@ var objectReplVerboseData = []byte(`============================================
 [2019-12-30 00:08:54] Checking on replication
 -> http://10.0.0.1:6000/recon/replication/object: {u'replication_last': 1577664310.620143, u'replication_stats': {u'rsync': 9, u'success': 196599, u'failure': 9, u'attempted': 98304, u'remove': 0, u'suffix_count': 1258927, u'start': 1535617859.516976, u'hashmatch': 196599, u'failure_nodes': {u'10.0.0.1': {u'sdb-09': 3}, u'10.0.0.2': {u'sdb-08': 6}}, u'suffix_sync': 0, u'suffix_hash': 2}, u'replication_time': 4.6007425824801125, u'object_replication_last': 1577664310.620143, u'object_replication_time': 4.6007425824801125}
 -> http://10.0.0.2:6000/recon/replication/object: {u'replication_last': 1577664316.719913, u'replication_stats': {u'rsync': 12, u'success': 196596, u'failure': 12, u'attempted': 98304, u'remove': 0, u'suffix_count': 1258168, u'start': 1535618096.714857, u'hashmatch': 196596, u'failure_nodes': {u'10.0.0.1': {u'sdb-13': 1, u'sdb-01': 1, u'sdb-02': 1, u'sdb-09': 4}, u'10.0.0.2': {u'sdb-06': 1, u'sdb-13': 1, u'sdb-08': 3}}, u'suffix_sync': 0, u'suffix_hash': 1}, u'replication_time': 4.947240881125132, u'object_replication_last': 1577664316.719913, u'object_replication_time': 4.947240881125132}
+-> http://10.0.0.3:6002/recon/replication/object: {'replication_time': None, 'replication_stats': None, 'replication_last': None}
 [replication_failure] low: 9, high: 12, avg: 10.5, total: 21, Failed: 0.0%, no_result: 0, reported: 2
 [replication_success] low: 196596, high: 196599, avg: 196597.5, total: 393195, Failed: 0.0%, no_result: 0, reported: 2
 [replication_time] low: 4, high: 4, avg: 4.8, total: 9, Failed: 0.0%, no_result: 0, reported: 2

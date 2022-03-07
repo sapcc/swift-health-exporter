@@ -10,6 +10,7 @@ swift_cluster_accounts_replication_age{storage_ip="10.0.0.2"} -1.5776646679851e+
 # TYPE swift_cluster_accounts_replication_duration gauge
 swift_cluster_accounts_replication_duration{storage_ip="10.0.0.1"} 13.002140045166016
 swift_cluster_accounts_replication_duration{storage_ip="10.0.0.2"} 12.217212915420532
+swift_cluster_accounts_replication_duration{storage_ip="10.0.0.3"} -1
 # HELP swift_cluster_containers_quarantined Quarantined containers reported by the swift-recon tool.
 # TYPE swift_cluster_containers_quarantined gauge
 swift_cluster_containers_quarantined{storage_ip="10.0.0.1"} 0
@@ -22,6 +23,7 @@ swift_cluster_containers_replication_age{storage_ip="10.0.0.2"} -1.5776645547433
 # TYPE swift_cluster_containers_replication_duration gauge
 swift_cluster_containers_replication_duration{storage_ip="10.0.0.1"} 83.79213690757751
 swift_cluster_containers_replication_duration{storage_ip="10.0.0.2"} 86.18623805046082
+swift_cluster_containers_replication_duration{storage_ip="10.0.0.3"} -1
 # HELP swift_cluster_containers_updater_sweep_time Container updater sweep time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_updater_sweep_time gauge
 swift_cluster_containers_updater_sweep_time{storage_ip="10.0.0.1"} 52.1986780166626
@@ -80,6 +82,7 @@ swift_cluster_objects_replication_age{storage_ip="10.0.0.2"} -1.577664315719913e
 # TYPE swift_cluster_objects_replication_duration gauge
 swift_cluster_objects_replication_duration{storage_ip="10.0.0.1"} 4.6007425824801125
 swift_cluster_objects_replication_duration{storage_ip="10.0.0.2"} 4.947240881125132
+swift_cluster_objects_replication_duration{storage_ip="10.0.0.3"} -1
 # HELP swift_cluster_objects_updater_sweep_time Object updater sweep time reported by the swift-recon tool.
 # TYPE swift_cluster_objects_updater_sweep_time gauge
 swift_cluster_objects_updater_sweep_time{storage_ip="10.0.0.1"} 0.44452810287475586

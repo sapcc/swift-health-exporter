@@ -17,33 +17,35 @@ package main
 import (
 	"os"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kong"
 )
 
-func main() {
-	serverTypeArg := kingpin.Arg("server-type", "Type of server.").Enum("account", "container", "object")
-	_ = kingpin.Flag("timeout", "Time to wait for a response from a server.").Short('t').Int()
-	verboseFlag := kingpin.Flag("verbose", "Print verbose info.").Short('v').Bool()
-	diskUsageFlag := kingpin.Flag("diskusage", "Get disk usage stats.").Short('d').Bool()
-	driveAuditFlag := kingpin.Flag("driveaudit", "Get drive audit error stats.").Bool()
-	md5Flag := kingpin.Flag("md5", "Get md5sum of servers ring and compare to local copy.").Bool()
-	quarantinedFlag := kingpin.Flag("quarantined", "Get cluster quarantine stats.").Short('q').Bool()
-	replicationFlag := kingpin.Flag("replication", "Get replication stats.").Short('r').Bool()
-	unmountedFlag := kingpin.Flag("unmounted", "Check cluster for unmounted devices.").Short('u').Bool()
-	updaterFlag := kingpin.Flag("updater", "Get updater stats.").Bool()
+var cli struct {
+	Timeout     int    `short:"t" help:"Time to wait for a response from a server."`
+	ServerType  string `arg:"" optional:"" help:"Type of server."`
+	Verbose     bool   `short:"v" help:"Print verbose info."`
+	Diskusage   bool   `short:"d" name:"diskusage" help:"Get disk usage stats."`
+	Driveaudit  bool   `name:"driveaudit" help:"Get drive audit error stats."`
+	MD5         bool   `name:"md5" help:"Get md5sum of servers ring and compare to local copy."`
+	Quarantined bool   `short:"q" help:"Get cluster quarantine stats."`
+	Replication bool   `short:"r" help:"Get replication stats."`
+	Unmounted   bool   `short:"u" help:"Check cluster for unmounted devices."`
+	Updater     bool   `help:"Get updater stats."`
+}
 
-	kingpin.Parse()
+func main() {
+	kong.Parse(&cli)
 	switch {
-	case *diskUsageFlag && *verboseFlag:
+	case cli.Diskusage && cli.Verbose:
 		os.Stdout.Write(diskUsageVerboseData)
-	case *driveAuditFlag && *verboseFlag:
+	case cli.Driveaudit && cli.Verbose:
 		os.Stdout.Write(driveAuditVerboseData)
-	case *md5Flag && *verboseFlag:
+	case cli.MD5 && cli.Verbose:
 		os.Stdout.Write(md5Data)
-	case *quarantinedFlag && *verboseFlag:
+	case cli.Quarantined && cli.Verbose:
 		os.Stdout.Write(quarantinedVerboseData)
-	case *replicationFlag && *verboseFlag:
-		switch *serverTypeArg {
+	case cli.Replication && cli.Verbose:
+		switch cli.ServerType {
 		case "account":
 			os.Stdout.Write(accountReplVerboseData)
 		case "container":
@@ -51,10 +53,10 @@ func main() {
 		case "object":
 			os.Stdout.Write(objectReplVerboseData)
 		}
-	case *unmountedFlag && *verboseFlag:
+	case cli.Unmounted && cli.Verbose:
 		os.Stdout.Write(unmountedVerboseData)
-	case *updaterFlag && *verboseFlag:
-		switch *serverTypeArg {
+	case cli.Updater && cli.Verbose:
+		switch cli.ServerType {
 		case "container":
 			os.Stdout.Write(containerUpdaterVerboseData)
 		case "object":

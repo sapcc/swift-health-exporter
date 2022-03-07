@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kong"
 )
 
 var reportData = []byte(
@@ -25,10 +25,13 @@ var reportData = []byte(
 ERROR: 10.0.0.2:6000/sdb-01 is unmounted -- This will cause replicas designated for that device to be considered missing until resolved or the ring is updated.
 {"object": {"retries": 0, "missing_0": 655, "copies_expected": 1965, "pct_found": 100.0, "overlapping": 0, "copies_found": 1965}, "container": {"retries": 0, "copies_expected": 120, "pct_found": 100.0, "overlapping": 0, "copies_found": 120}}`)
 
+var cli struct {
+	DumpJSON bool `short:"j" required:"" help:"Dump dispersion report in json format."`
+}
+
 func main() {
-	dumpJSONFlag := kingpin.Flag("dump-json", "Dump dispersion report in json format.").Short('j').Required().Bool()
-	kingpin.Parse()
-	if *dumpJSONFlag {
+	kong.Parse(&cli)
+	if cli.DumpJSON {
 		os.Stdout.Write(reportData)
 	}
 }
