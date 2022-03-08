@@ -18,9 +18,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// This value is overwritten in unit tests.
-var IsTest = false
-
 // Collector holds a collection of Task(s) and implements the prometheus.Collector
 // interface.
 //

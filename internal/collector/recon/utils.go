@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/sapcc/go-bits/logg"
+
 	"github.com/sapcc/swift-health-exporter/internal/util"
 )
 
@@ -56,7 +57,7 @@ func (value *flexibleFloat64) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 
-		// We don't care about the error here, default value of 0 is ok.
+		//nolint:errcheck // We don't care about the error here, default value of 0 is ok.
 		v, _ := strconv.ParseFloat(str, 64)
 		*value = flexibleFloat64(v)
 		return nil
