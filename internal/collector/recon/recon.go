@@ -20,7 +20,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// This value is overwritten in unit tests.
+// IsTest variable is set to true in unit tests.
 var IsTest = false
 
 // TaskOpts holds common parameters that are used by all recon tasks.

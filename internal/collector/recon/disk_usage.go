@@ -152,7 +152,7 @@ func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 			t.fractionalUsageByDisk.With(prometheus.Labels{
 				"storage_ip": hostname,
 				"disk":       device,
-			}).Set(float64(diskUsageRatio))
+			}).Set(diskUsageRatio)
 		}
 	}
 
