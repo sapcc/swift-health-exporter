@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/alecthomas/kong v0.5.0
 	github.com/prometheus/client_golang v1.12.1
-	github.com/sapcc/go-bits v0.0.0-20220420164641-de8a04267267
+	github.com/sapcc/go-bits v0.0.0-20220421001326-5fc35d483379
 )
 
 require (
