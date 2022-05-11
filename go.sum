@@ -183,8 +183,8 @@ github.com/prometheus/procfs v0.6.0/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1
 github.com/prometheus/procfs v0.7.3 h1:4jVXhlkAyzOScmCkXBTOLRLTz8EeU+eyjrwB/EPq0VU=
 github.com/prometheus/procfs v0.7.3/go.mod h1:cz+aTbrPOrUb4q7XlbU9ygM+/jj0fzG6c1xBZuNvfVA=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/sapcc/go-bits v0.0.0-20220506231902-df94414a6255 h1:8wnKs4Xl/hpqXLSfTr0sRvyWLOQ1uIdXWLnYZEH2RhA=
-github.com/sapcc/go-bits v0.0.0-20220506231902-df94414a6255/go.mod h1:51WQyNfN61ASvq05jvwF2Z7WmJKxiQd0SHttXu+hKKw=
+github.com/sapcc/go-bits v0.0.0-20220511093204-023c56bdc361 h1:fYObkznVhIT1jNfnzNGO47QvIxcJBXJvOhB3DXllD1o=
+github.com/sapcc/go-bits v0.0.0-20220511093204-023c56bdc361/go.mod h1:51WQyNfN61ASvq05jvwF2Z7WmJKxiQd0SHttXu+hKKw=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
