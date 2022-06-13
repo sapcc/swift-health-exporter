@@ -1,4 +1,4 @@
-# github.com/alecthomas/kong v0.5.0
+# github.com/alecthomas/kong v0.6.0
 ## explicit; go 1.13
 github.com/alecthomas/kong
 # github.com/beorn7/perks v1.0.1
@@ -17,9 +17,6 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 ## explicit
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/pkg/errors v0.9.1
-## explicit
-github.com/pkg/errors
 # github.com/prometheus/client_golang v1.12.2
 ## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
