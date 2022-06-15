@@ -35,7 +35,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/sapcc/go-bits v0.0.0-20220614181240-e759c47b8d74
+# github.com/sapcc/go-bits v0.0.0-20220615160326-b161539f0d95
 ## explicit; go 1.18
 github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpee
