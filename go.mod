@@ -3,7 +3,7 @@ module github.com/sapcc/swift-health-exporter
 go 1.18
 
 require (
-	github.com/alecthomas/kong v0.6.0
+	github.com/alecthomas/kong v0.6.1
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sapcc/go-bits v0.0.0-20220614181240-e759c47b8d74
 )
