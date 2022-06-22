@@ -22,8 +22,10 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sapcc/go-bits/httpapi"
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 
@@ -66,7 +68,7 @@ func main() {
 		logg.Fatal("no collector enabled")
 	}
 
-	registry := prometheus.NewRegistry()
+	registry := prometheus.DefaultRegisterer
 	c := collector.New()
 	s := collector.NewScraper(cli.MaxFailures)
 
@@ -93,7 +95,7 @@ func main() {
 		addTask(cli.ReconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
 
-	registry.MustRegister(c)
+	prometheus.MustRegister(c)
 
 	// Run the scraper at least once so that the metric values are updated before a
 	// Prometheus scrape.
@@ -102,15 +104,19 @@ func main() {
 	// Start scraper loop.
 	go s.Run()
 
+	// Collect HTTP handlers.
+	handler := httpapi.Compose(
+		landingPageAPI{},
+		httpapi.WithoutLogging(),
+	)
+	http.Handle("/", handler)
+	http.Handle("/metrics", promhttp.Handler())
+
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", landingPageHandler)
-	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
-	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
+	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, nil)
 	if err != nil {
 		logg.Fatal(err.Error())
 	}
@@ -138,8 +144,11 @@ func getExecutablePath(envKey, fileName string) string {
 	return path
 }
 
-func landingPageHandler(w http.ResponseWriter, r *http.Request) {
-	pageBytes := []byte(`<html>
+type landingPageAPI struct{}
+
+func (landingPageAPI) AddTo(r *mux.Router) {
+	r.Methods("GET", "HEAD").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pageBytes := []byte(`<html>
 <head><title>Swift Health Exporter</title></head>
 <body>
 <h1>Swift Health Exporter</h1>
@@ -148,10 +157,11 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 </body>
 </html>`)
 
-	_, err := w.Write(pageBytes)
-	if err != nil {
-		logg.Error(err.Error())
-	}
+		_, err := w.Write(pageBytes)
+		if err != nil {
+			logg.Error(err.Error())
+		}
+	})
 }
 
 // addTask adds a Task to the given Collector and the Scraper along
