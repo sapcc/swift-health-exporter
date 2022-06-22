@@ -24,7 +24,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sapcc/go-bits/httpee"
+	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
@@ -110,7 +110,7 @@ func main() {
 	mux.Handle("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	handler := logg.Middleware{}.Wrap(mux)
 	logg.Info("listening on " + listenAddr)
-	err := httpee.ListenAndServeContext(httpee.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
+	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, handler)
 	if err != nil {
 		logg.Fatal(err.Error())
 	}
