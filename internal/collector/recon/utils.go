@@ -73,7 +73,8 @@ func (value *flexibleFloat64) UnmarshalJSON(b []byte) error {
 // output of a recon command.
 //
 // Match group ref:
-//  <1: host> <2: output>
+//
+//	<1: host> <2: output>
 var reconHostOutputRx = regexp.MustCompile(`(?m)^(?:->|!!) https?://([a-zA-Z0-9-.]+)\S*\s(.*)$`)
 
 func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, error) {

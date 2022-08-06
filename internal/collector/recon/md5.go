@@ -92,14 +92,17 @@ func (t *MD5Task) CollectMetrics(ch chan<- prometheus.Metric) {
 // the aggregate md5 recon output.
 //
 // Match group ref:
-//  <1: kind> <2: output block>
+//
+//	<1: kind> <2: output block>
 //
 // Example of an output block for ring:
-//   [<time-stamp>] Checking ring md5sums
-//   -> On disk object.ring.gz md5sum: 123456
-//   -> http://10.0.0.1:6000/recon/ringmd5: <urlopen error [Errno 111] ECONNREFUSED>
-//   -> http://10.0.0.2:6000/recon/ringmd5: {'/path/to/account.ring.gz': '123456', '/path/to/container.ring.gz': '123456', '/path/to/object.ring.gz': '123456'}
-//   -> http://10.0.0.2:6000/recon/ringmd5 matches.
+//
+//	[<time-stamp>] Checking ring md5sums
+//	-> On disk object.ring.gz md5sum: 123456
+//	-> http://10.0.0.1:6000/recon/ringmd5: <urlopen error [Errno 111] ECONNREFUSED>
+//	-> http://10.0.0.2:6000/recon/ringmd5: {'/path/to/account.ring.gz': '123456', '/path/to/container.ring.gz': '123456', '/path/to/object.ring.gz': '123456'}
+//	-> http://10.0.0.2:6000/recon/ringmd5 matches.
+//
 // 1/2 hosts matched, 1 error[s] while checking hosts.
 var md5OutputBlockRx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:(?:->|!!).*\n)*)\s*[0-9]+/[0-9]+ hosts matched, [0-9]+ error.*$`)
