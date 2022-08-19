@@ -115,7 +115,6 @@ func main() {
 	// this port has been allocated for Swift health exporter
 	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
 	listenAddr := ":9520"
-	logg.Info("listening on " + listenAddr)
 	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, nil)
 	if err != nil {
 		logg.Fatal(err.Error())
