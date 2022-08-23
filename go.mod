@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/kong v0.6.1
 	github.com/gorilla/mux v1.8.0
 	github.com/prometheus/client_golang v1.13.0
-	github.com/sapcc/go-bits v0.0.0-20220819141629-31b96bd61763
+	github.com/sapcc/go-bits v0.0.0-20220823141731-fd7850ce8cb7
 )
 
 require (
@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/sapcc/go-api-declarations v1.2.0 // indirect
+	github.com/sapcc/go-api-declarations v1.3.0 // indirect
 	github.com/sergi/go-diff v1.2.0 // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
