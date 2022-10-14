@@ -35,10 +35,10 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/sapcc/go-api-declarations v1.3.0
+# github.com/sapcc/go-api-declarations v1.4.0
 ## explicit; go 1.19
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20220919133313-cbe76a8983ac
+# github.com/sapcc/go-bits v0.0.0-20221014034219-692408a2c3e8
 ## explicit; go 1.19
 github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpapi
