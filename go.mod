@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/alecthomas/kong v0.7.0
 	github.com/gorilla/mux v1.8.0
-	github.com/prometheus/client_golang v1.13.1
+	github.com/prometheus/client_golang v1.14.0
 	github.com/sapcc/go-bits v0.0.0-20221111045434-04255a220839
 )
 
@@ -14,7 +14,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/sapcc/go-api-declarations v1.4.2 // indirect
