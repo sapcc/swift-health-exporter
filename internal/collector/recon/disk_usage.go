@@ -17,7 +17,9 @@ package recon
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
+	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sapcc/go-bits/logg"
@@ -156,8 +158,17 @@ func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 		}
 	}
 
+	if capStr := os.Getenv("SWIFT_CLUSTER_RAW_CAPACITY"); capStr != "" {
+		cap, err := strconv.ParseFloat(capStr, 64)
+		if err != nil {
+			logg.Error("could not parse 'SWIFT_CLUSTER_RAW_CAPACITY' value: %s", err.Error())
+		} else {
+			totalSize = flexibleFloat64(cap)
+		}
+	}
+
 	usageRatio := float64(totalUsed) / float64(totalSize)
-	if totalSize == 0 {
+	if totalSize == 0 || usageRatio > 1 {
 		usageRatio = 1.0
 	}
 
