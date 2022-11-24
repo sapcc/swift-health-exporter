@@ -158,12 +158,12 @@ func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 		}
 	}
 
-	if capStr := os.Getenv("SWIFT_CLUSTER_RAW_CAPACITY"); capStr != "" {
-		cap, err := strconv.ParseFloat(capStr, 64)
+	if rawCapStr := os.Getenv("SWIFT_CLUSTER_RAW_CAPACITY"); rawCapStr != "" {
+		rawCap, err := strconv.ParseFloat(rawCapStr, 64)
 		if err != nil {
 			logg.Error("could not parse 'SWIFT_CLUSTER_RAW_CAPACITY' value: %s", err.Error())
 		} else {
-			totalSize = flexibleFloat64(cap)
+			totalSize = flexibleFloat64(rawCap)
 		}
 	}
 
