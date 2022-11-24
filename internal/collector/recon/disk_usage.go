@@ -168,6 +168,10 @@ func (t *DiskUsageTask) UpdateMetrics() (map[string]int, error) {
 	}
 
 	usageRatio := float64(totalUsed) / float64(totalSize)
+	// The usageRatio value can be greater than 1:
+	// 1. if the manually given total capacity (SWIFT_CLUSTER_RAW_CAPACITY) is less than
+	//    the total capacity reported by 'swift-recon' tool
+	// 2. and the usage is greater than the manually given total capacity.
 	if totalSize == 0 || usageRatio > 1 {
 		usageRatio = 1.0
 	}
