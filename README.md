@@ -55,6 +55,7 @@ Additionally, the following environment variables are recognized:
 | ----------------               | ----------------                                                              | ----------------                                                                          |
 | `SWIFT_DISPERSION_REPORT_PATH` | yes, if executable not in `$PATH` and `dispersion` collector is enabled       | Path to the `swift-dispersion-report` executable.                                         |
 | `SWIFT_RECON_PATH`             | yes, if executable not in `$PATH` and any `recon.<name>` collector is enabled | Path to the `swift-recon` executable.                                                     |
+| `SWIFT_CLUSTER_RAW_CAPACITY_BYTES` | no | This cluster capacity value (in bytes) will be used for `swift_cluster_storage_capacity_bytes` metric instead of calculating total capacity using `swift-recon` tool. |
 | `DEBUG`                        | no                                                                            | If this option is set to `true` then `swift-health-exporter` will also output debug logs. |
 
 ## Collectors
