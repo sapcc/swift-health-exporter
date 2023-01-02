@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/kong v0.7.1
 	github.com/gorilla/mux v1.8.0
 	github.com/prometheus/client_golang v1.14.0
-	github.com/sapcc/go-bits v0.0.0-20221208125747-5e9258fd2f23
+	github.com/sapcc/go-bits v0.0.0-20230101201537-12465ca06570
 )
 
 require (
