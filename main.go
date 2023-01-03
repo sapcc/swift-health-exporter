@@ -35,7 +35,8 @@ import (
 )
 
 var cli struct {
-	Debug bool `env:"DEBUG" help:"Enable debug mode."`
+	Debug            bool   `env:"DEBUG" help:"Enable debug mode."`
+	WebListenAddress string `name:"web.listen-address" default:"0.0.0.0:9520" help:"Exporter listening address."`
 
 	MaxFailures int `name:"collector.max-failures" default:"4" help:"Max allowed failures for a specific collector."`
 
@@ -112,10 +113,7 @@ func main() {
 	http.Handle("/", handler)
 	http.Handle("/metrics", promhttp.Handler())
 
-	// this port has been allocated for Swift health exporter
-	// See: https://github.com/prometheus/prometheus/wiki/Default-port-allocations
-	listenAddr := ":9520"
-	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), listenAddr, nil)
+	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), cli.WebListenAddress, nil)
 	if err != nil {
 		logg.Fatal(err.Error())
 	}
