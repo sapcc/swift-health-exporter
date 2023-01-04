@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -25,6 +26,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sapcc/go-api-declarations/bininfo"
 	"github.com/sapcc/go-bits/httpapi"
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
@@ -36,6 +38,7 @@ import (
 
 var cli struct {
 	Debug            bool   `env:"DEBUG" help:"Enable debug mode."`
+	ShowVersion      bool   `name:"version" short:"v" help:"Report version string and exit."`
 	WebListenAddress string `name:"web.listen-address" default:"0.0.0.0:9520" help:"Exporter listening address."`
 
 	MaxFailures int `name:"collector.max-failures" default:"4" help:"Max allowed failures for a specific collector."`
@@ -57,6 +60,11 @@ var cli struct {
 
 func main() {
 	kong.Parse(&cli)
+	if cli.ShowVersion {
+		fmt.Println(bininfo.VersionOr("unknown"))
+		return
+	}
+
 	reconCollectorEnabled := !(cli.NoReconMD5Collector) ||
 		cli.ReconDiskUsageCollector ||
 		cli.ReconDriveAuditCollector ||
