@@ -30,6 +30,7 @@ import (
 	"github.com/sapcc/go-bits/httpapi"
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
+	"github.com/sapcc/go-bits/must"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
@@ -121,10 +122,8 @@ func main() {
 	http.Handle("/", handler)
 	http.Handle("/metrics", promhttp.Handler())
 
-	err := httpext.ListenAndServeContext(httpext.ContextWithSIGINT(context.Background(), 1*time.Second), cli.WebListenAddress, nil)
-	if err != nil {
-		logg.Fatal(err.Error())
-	}
+	ctx := httpext.ContextWithSIGINT(context.Background(), 1*time.Second)
+	must.Succeed(httpext.ListenAndServeContext(ctx, cli.WebListenAddress, nil))
 }
 
 // getExecutablePath gets the path to an executable from the environment

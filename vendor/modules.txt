@@ -53,6 +53,7 @@ github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpapi
 github.com/sapcc/go-bits/httpext
 github.com/sapcc/go-bits/logg
+github.com/sapcc/go-bits/must
 github.com/sapcc/go-bits/osext
 # github.com/sergi/go-diff v1.3.1
 ## explicit; go 1.12
