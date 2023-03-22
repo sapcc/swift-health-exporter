@@ -17,17 +17,11 @@ binaries:
 coverageTest:
   only: '/collector'
 
-vendoring:
-  enabled: true
-
 golangciLint:
   createConfig: true
 
 githubWorkflow:
   global:
-    assignees:
-      - majewsky
-      - SuperSandro2000
     ignorePaths: ["**.md"] # all Markdown files
   ci:
     enabled: true
@@ -41,6 +35,12 @@ githubWorkflow:
     ignorePaths: [] # override global setting so that nothing is ignored
 
 renovate:
+  enabled: true
+  assignees:
+    - majewsky
+    - SuperSandro2000
+
+vendoring:
   enabled: true
 
 verbatim: |
