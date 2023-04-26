@@ -31,6 +31,7 @@ import (
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/go-bits/must"
+	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
@@ -65,6 +66,10 @@ func main() {
 		fmt.Println(bininfo.VersionOr("unknown"))
 		return
 	}
+
+	logg.ShowDebug = cli.Debug
+	undoMaxprocs := must.Return(maxprocs.Set(maxprocs.Logger(logg.Debug)))
+	defer undoMaxprocs()
 
 	reconCollectorEnabled := !(cli.NoReconMD5Collector) ||
 		cli.ReconDiskUsageCollector ||
