@@ -3,23 +3,20 @@
 # Edit Makefile.maker.yaml instead.                                            #
 ################################################################################
 
-name: License
+name: Checks
 "on":
   push:
     branches:
       - master
-    paths-ignore:
-      - '**.md'
   pull_request:
     branches:
       - '*'
-    paths-ignore:
-      - '**.md'
 permissions:
+  checks: write
   contents: read
 jobs:
-  addlicense:
-    name: Check
+  checks:
+    name: Checks
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -28,6 +25,23 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: "1.20"
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          base-ref: ${{ github.event.pull_request.base.sha || 'main' }}
+          deny-licenses: AGPL-1.0, AGPL-3.0, GPL-1.0, GPL-2.0, GPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          fail-on-severity: moderate
+          head-ref: ${{ github.event.pull_request.head.sha || github.ref }}
+      - name: Run govulncheck
+        uses: golang/govulncheck-action@v1
+      - name: Check for spelling errors
+        uses: reviewdog/action-misspell@v1
+        with:
+          exclude: ./vendor/*
+          fail_on_error: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          ignore: importas
+          reporter: github-check
       - name: Check if source code files have license header
         run: |
           shopt -s globstar
