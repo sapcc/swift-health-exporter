@@ -124,11 +124,12 @@ func main() {
 		landingPageAPI{},
 		httpapi.WithoutLogging(),
 	)
-	http.Handle("/", handler)
-	http.Handle("/metrics", promhttp.Handler())
+	smux := http.NewServeMux()
+	smux.Handle("/", handler)
+	smux.Handle("/metrics", promhttp.Handler())
 
 	ctx := httpext.ContextWithSIGINT(context.Background(), 1*time.Second)
-	must.Succeed(httpext.ListenAndServeContext(ctx, cli.WebListenAddress, nil))
+	must.Succeed(httpext.ListenAndServeContext(ctx, cli.WebListenAddress, smux))
 }
 
 // getExecutablePath gets the path to an executable from the environment
