@@ -28,6 +28,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-api-declarations/bininfo"
 	"github.com/sapcc/go-bits/httpapi"
+	"github.com/sapcc/go-bits/httpapi/pprofapi"
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/go-bits/must"
@@ -123,6 +124,7 @@ func main() {
 	handler := httpapi.Compose(
 		landingPageAPI{},
 		httpapi.WithoutLogging(),
+		pprofapi.API{IsAuthorized: pprofapi.IsRequestFromLocalhost},
 	)
 	smux := http.NewServeMux()
 	smux.Handle("/", handler)
