@@ -1,5 +1,8 @@
 # Configuration file for <https://github.com/sapcc/go-makefile-maker>
 
+metadata:
+  url: https://github.com/sapcc/swift-health-exporter
+
 binaries:
   - name:        swift-health-exporter
     fromPackage: .
