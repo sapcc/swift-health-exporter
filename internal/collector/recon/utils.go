@@ -96,11 +96,18 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		data = bytes.ReplaceAll(data, []byte(`True`), []byte(`true`))
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
 		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
-
+		data = []byte(stripEscapeChars(string(data)))
 		result[hostname] = data
 	}
 
 	return result, nil
+}
+
+func stripEscapeChars(s string) string {
+	re := regexp.MustCompile(`(?:(\\\w\d\d))*`)
+	return re.ReplaceAllStringFunc(s, func(s string) string {
+        return ``
+    })
 }
 
 func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {

@@ -74,6 +74,7 @@ func testCollector(t *testing.T, dispersionReportPath, reconPath, fixturesPath s
 	addTask(true, c, s, recon.NewReplicationTask(opts), reconExitCode)
 	addTask(true, c, s, recon.NewUnmountedTask(opts), reconExitCode)
 	addTask(true, c, s, recon.NewUpdaterSweepTask(opts), reconExitCode)
+	addTask(true, c, s, recon.NewShardingTask(opts), reconExitCode)
 
 	registry.MustRegister(c)
 
