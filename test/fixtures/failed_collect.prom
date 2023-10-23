@@ -18,110 +18,110 @@ swift_cluster_containers_replication_age{storage_ip="10.0.0.1"} -1.5790072356171
 swift_cluster_containers_replication_duration{storage_ip="10.0.0.1"} 98.37576985359192
 # HELP swift_cluster_containers_sharding_audit_root_attempted Container root DB auditor number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_attempted gauge
-swift_cluster_containers_sharding_audit_root_attempted{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_root_attempted{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_root_failure Container root DB auditor number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_failure gauge
-swift_cluster_containers_sharding_audit_root_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_root_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_root_has_overlap Container root DB auditor has_overlap reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_has_overlap gauge
-swift_cluster_containers_sharding_audit_root_has_overlap{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_root_has_overlap{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_root_num_overlap Container root DB auditor number of overlaps reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_num_overlap gauge
-swift_cluster_containers_sharding_audit_root_num_overlap{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_root_num_overlap{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_root_success Container root DB auditor number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_success gauge
-swift_cluster_containers_sharding_audit_root_success{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_shard_attempted Container shard DB auditor number attmpted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_shard_attempted gauge
-swift_cluster_containers_sharding_audit_shard_attempted{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_audit_shard_attempted{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_audit_shard_failure Container shard DB auditor number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_shard_failure gauge
-swift_cluster_containers_sharding_audit_shard_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_audit_shard_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_audit_shard_success Container shard DB auditor number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_shard_success gauge
-swift_cluster_containers_sharding_audit_shard_success{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_audit_shard_success{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_candidates_found Number of container sharding candidates reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_candidates_found gauge
-swift_cluster_containers_sharding_candidates_found{storage_ip="10.245.57.95"} 7
+swift_cluster_containers_sharding_candidates_found{storage_ip="10.0.0.1"} 7
 # HELP swift_cluster_containers_sharding_candidates_object_count Container sharding candidates object count reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_candidates_object_count gauge
-swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_ACCOUNT",container="warp-sharding.64849-2",storage_ip="10.245.57.95"} 1.448062e+06
-swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-warp-sharding-10mil-256",storage_ip="10.245.57.95"} 1e+07
-swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-warp-sharding-5mil-256",storage_ip="10.245.57.95"} 5e+06
-swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="versionswarp-sharding3",storage_ip="10.245.57.95"} 2.828027e+06
-swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="warp-sharding3",storage_ip="10.245.57.95"} 2.818948e+06
+swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_ACCOUNT",container="warp-sharding.64849-2",storage_ip="10.0.0.1"} 1.448062e+06
+swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-warp-sharding-10mil-256",storage_ip="10.0.0.1"} 1e+07
+swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-warp-sharding-5mil-256",storage_ip="10.0.0.1"} 5e+06
+swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="versionswarp-sharding3",storage_ip="10.0.0.1"} 2.828027e+06
+swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="warp-sharding3",storage_ip="10.0.0.1"} 2.818948e+06
 # HELP swift_cluster_containers_sharding_cleaved_attempted Container shard cleaved number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_attempted gauge
-swift_cluster_containers_sharding_cleaved_attempted{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_cleaved_attempted{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_cleaved_failure Container shard cleaved number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_failure gauge
-swift_cluster_containers_sharding_cleaved_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_cleaved_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_cleaved_max_time Container shard cleaved max_time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_max_time gauge
-swift_cluster_containers_sharding_cleaved_max_time{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_cleaved_max_time{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_cleaved_min_time Container shard cleaved min_time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_min_time gauge
-swift_cluster_containers_sharding_cleaved_min_time{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_cleaved_min_time{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_cleaved_success Container shard cleaved number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_success gauge
-swift_cluster_containers_sharding_cleaved_success{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_cleaved_success{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_created_attempted Container shard created number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_created_attempted gauge
-swift_cluster_containers_sharding_created_attempted{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_created_attempted{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_created_failure Container shard created number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_created_failure gauge
-swift_cluster_containers_sharding_created_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_created_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_created_success Container shard created number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_created_success gauge
-swift_cluster_containers_sharding_created_success{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_created_success{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_misplaced_attempted Container sharding stats on misplaced objects reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_attempted gauge
-swift_cluster_containers_sharding_misplaced_attempted{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_misplaced_attempted{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_misplaced_failure Container sharding stats on misplaced objects failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_failure gauge
-swift_cluster_containers_sharding_misplaced_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_misplaced_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_misplaced_found Container sharding stats on misplaced objects number found reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_found gauge
-swift_cluster_containers_sharding_misplaced_found{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_misplaced_found{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_misplaced_placed Container sharding stats on misplaced objects number placed reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_placed gauge
-swift_cluster_containers_sharding_misplaced_placed{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_misplaced_placed{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_misplaced_success Container sharding stats on misplaced objects number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_success gauge
-swift_cluster_containers_sharding_misplaced_success{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_misplaced_success{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_misplaced_unplaced Container sharding stats on misplaced objects reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_misplaced_unplaced gauge
-swift_cluster_containers_sharding_misplaced_unplaced{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_misplaced_unplaced{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_scanned_attempted Container shard scanned number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_scanned_attempted gauge
-swift_cluster_containers_sharding_scanned_attempted{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_scanned_attempted{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_scanned_failure Container shard scanned number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_scanned_failure gauge
-swift_cluster_containers_sharding_scanned_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_scanned_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_scanned_max_time Container shard scanned max_time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_scanned_max_time gauge
-swift_cluster_containers_sharding_scanned_max_time{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_scanned_max_time{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_scanned_min_time Container shard scanned min_time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_scanned_min_time gauge
-swift_cluster_containers_sharding_scanned_min_time{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_scanned_min_time{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_scanned_success Container shard scanned number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_scanned_success gauge
-swift_cluster_containers_sharding_scanned_success{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_scanned_success{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_visited_attempted Container shard visited number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_visited_attempted gauge
-swift_cluster_containers_sharding_visited_attempted{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_visited_attempted{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_visited_completed Container shard visited number completed reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_visited_completed gauge
-swift_cluster_containers_sharding_visited_completed{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_visited_completed{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_visited_failure Container shard visited number of failures reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_visited_failure gauge
-swift_cluster_containers_sharding_visited_failure{storage_ip="10.245.57.95"} 0
+swift_cluster_containers_sharding_visited_failure{storage_ip="10.0.0.1"} 0
 # HELP swift_cluster_containers_sharding_visited_skipped Container shard visited number skipped reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_visited_skipped gauge
-swift_cluster_containers_sharding_visited_skipped{storage_ip="10.245.57.95"} 2983
+swift_cluster_containers_sharding_visited_skipped{storage_ip="10.0.0.1"} 2983
 # HELP swift_cluster_containers_sharding_visited_success Container shard visited number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_visited_success gauge
-swift_cluster_containers_sharding_visited_success{storage_ip="10.245.57.95"} 12
+swift_cluster_containers_sharding_visited_success{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_updater_sweep_time Container updater sweep time reported by the swift-recon tool.
 # TYPE swift_cluster_containers_updater_sweep_time gauge
 swift_cluster_containers_updater_sweep_time{storage_ip="10.0.0.1"} 54.06525897979736
