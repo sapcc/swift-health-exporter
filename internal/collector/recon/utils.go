@@ -96,7 +96,10 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		data = bytes.ReplaceAll(data, []byte(`True`), []byte(`true`))
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
 		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
+
+		//In the event that object store issues add escape characters to swift-recon output, strip these chracters to continue.
 		data = []byte(stripEscapeChars(string(data)))
+
 		result[hostname] = data
 	}
 
@@ -106,8 +109,8 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 func stripEscapeChars(s string) string {
 	re := regexp.MustCompile(`(?:(\\\w\d\d))*`)
 	return re.ReplaceAllStringFunc(s, func(s string) string {
-        return ``
-    })
+		return ``
+	})
 }
 
 func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {

@@ -299,6 +299,8 @@ func (t *ShardingTask) Name() string {
 }
 
 // DescribeMetrics implements the collector.Task interface.
+//
+//nolint:dupl
 func (t *ShardingTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 	t.containerShardingAuditRootAttempted.Describe(ch)
 	t.containerShardingAuditRootFailure.Describe(ch)
@@ -348,10 +350,11 @@ func (t *ShardingTask) DescribeMetrics(ch chan<- *prometheus.Desc) {
 
 	t.containerShardingCandidatesFound.Describe(ch)
 	t.containerShardingCandidatesObjectCount.Describe(ch)
-
 }
 
 // CollectMetrics implements the collector.Task interface.
+//
+//nolint:dupl
 func (t *ShardingTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.containerShardingAuditRootAttempted.Collect(ch)
 	t.containerShardingAuditRootFailure.Collect(ch)
@@ -403,7 +406,7 @@ func (t *ShardingTask) CollectMetrics(ch chan<- prometheus.Metric) {
 	t.containerShardingCandidatesObjectCount.Collect(ch)
 }
 
-type AuditRoot struct {
+type ShardingAuditRoot struct {
 	Attempted  int `json:"attempted"`
 	Failure    int `json:"failure"`
 	HasOverlap int `json:"has_overlap"`
@@ -411,13 +414,13 @@ type AuditRoot struct {
 	Success    int `json:"success"`
 }
 
-type AuditShard struct {
+type ShardingAuditShard struct {
 	Attempted int `json:"attempted"`
 	Failure   int `json:"failure"`
 	Success   int `json:"success"`
 }
 
-type ShardCleaved struct {
+type ShardingShardCleaved struct {
 	Attempted int `json:"attempted"`
 	Failure   int `json:"failure"`
 	MaxTime   int `json:"max_time"`
@@ -425,13 +428,13 @@ type ShardCleaved struct {
 	Success   int `json:"success"`
 }
 
-type ShardCreated struct {
+type ShardingShardCreated struct {
 	Attempted int `json:"attempted"`
 	Failure   int `json:"failure"`
 	Success   int `json:"success"`
 }
 
-type Misplaced struct {
+type ShardingMisplaced struct {
 	Attempted int `json:"attempted"`
 	Failure   int `json:"failure"`
 	Found     int `json:"found"`
@@ -440,7 +443,7 @@ type Misplaced struct {
 	Unplaced  int `json:"unplaced"`
 }
 
-type Scanned struct {
+type ShardingScanned struct {
 	Attempted int `json:"attempted"`
 	Failure   int `json:"failure"`
 	MaxTime   int `json:"max_time"`
@@ -448,7 +451,7 @@ type Scanned struct {
 	Success   int `json:"success"`
 }
 
-type Visited struct {
+type ShardingVisited struct {
 	Attempted int `json:"attempted"`
 	Completed int `json:"completed"`
 	Failure   int `json:"failure"`
@@ -475,7 +478,7 @@ type ShardingInProgress struct {
 	} `json:"all"`
 }
 
-type Top struct {
+type ShardingInProgressTop struct {
 	Account     string `json:"account"`
 	Container   string `json:"container"`
 	FileSize    int64  `json:"file_size"`
@@ -486,20 +489,20 @@ type Top struct {
 }
 
 type ShardingCandidates struct {
-	Found int   `json:"found"`
-	Top   []Top `json:"top"`
+	Found int                     `json:"found"`
+	Top   []ShardingInProgressTop `json:"top"`
 }
 
 type Sharding struct {
-	AuditRoot          AuditRoot          `json:"audit_root"`
-	AuditShard         AuditShard         `json:"audit_shard"`
-	Cleaved            ShardCleaved       `json:"cleaved"`
-	Created            ShardCreated       `json:"created"`
-	Misplaced          Misplaced          `json:"misplaced"`
-	Scanned            Scanned            `json:"scanned"`
-	Visited            Visited            `json:"visited"`
-	ShardingInProgress ShardingInProgress `json:"sharding_in_progress"`
-	ShardingCandidates ShardingCandidates `json:"sharding_candidates"`
+	AuditRoot          ShardingAuditRoot    `json:"audit_root"`
+	AuditShard         ShardingAuditShard   `json:"audit_shard"`
+	Cleaved            ShardingShardCleaved `json:"cleaved"`
+	Created            ShardingShardCreated `json:"created"`
+	Misplaced          ShardingMisplaced    `json:"misplaced"`
+	Scanned            ShardingScanned      `json:"scanned"`
+	Visited            ShardingVisited      `json:"visited"`
+	ShardingInProgress ShardingInProgress   `json:"sharding_in_progress"`
+	ShardingCandidates ShardingCandidates   `json:"sharding_candidates"`
 }
 
 type ShardingStats struct {
@@ -525,6 +528,8 @@ func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
 
 	for hostname, dataBytes := range outputPerHost {
 		if !json.Valid(dataBytes) {
+			//Replace instances of breaking null string errors with a 0.
+			//Workaround for unmarshalling, and consistent with eventual metric export value. (0: no error/1: error)
 			dataBytes = bytes.ReplaceAll(dataBytes, []byte(`"None"`), []byte(`0`))
 		}
 
@@ -583,24 +588,24 @@ func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
 		t.containerShardingVisitedSkipped.With(l).Set(float64(data.ShardingStats.Sharding.Visited.Skipped))
 		t.containerShardingVisitedSuccess.With(l).Set(float64(data.ShardingStats.Sharding.Visited.Success))
 
-		for _, sharding_process := range data.ShardingStats.Sharding.ShardingInProgress.All {
-			l := prometheus.Labels{"storage_ip": hostname, "container": sharding_process.Container, "account": sharding_process.Account}
-			t.containerShardingInProgressActive.With(l).Set(float64(sharding_process.Active))
-			t.containerShardingInProgressCleaved.With(l).Set(float64(sharding_process.Cleaved))
-			t.containerShardingInProgressCreated.With(l).Set(float64(sharding_process.Created))
-			if sharding_process.Error != `0` {
+		for _, shardingProcess := range data.ShardingStats.Sharding.ShardingInProgress.All {
+			l := prometheus.Labels{"storage_ip": hostname, "container": shardingProcess.Container, "account": shardingProcess.Account}
+			t.containerShardingInProgressActive.With(l).Set(float64(shardingProcess.Active))
+			t.containerShardingInProgressCleaved.With(l).Set(float64(shardingProcess.Cleaved))
+			t.containerShardingInProgressCreated.With(l).Set(float64(shardingProcess.Created))
+			if shardingProcess.Error != `0` {
 				t.containerShardingInProgressError.With(l).Set(float64(1))
 			} else {
 				t.containerShardingInProgressError.With(l).Set(float64(0))
 			}
-			t.containerShardingInProgressFound.With(l).Set(float64(sharding_process.Found))
-			t.containerShardingInProgressObjectcount.With(l).Set(float64(sharding_process.ObjectCount))
+			t.containerShardingInProgressFound.With(l).Set(float64(shardingProcess.Found))
+			t.containerShardingInProgressObjectcount.With(l).Set(float64(shardingProcess.ObjectCount))
 		}
 
 		t.containerShardingCandidatesFound.With(prometheus.Labels{"storage_ip": hostname}).Set(float64(data.ShardingStats.Sharding.ShardingCandidates.Found))
 
-		for _, sharding_candidate := range data.ShardingStats.Sharding.ShardingCandidates.Top {
-			t.containerShardingCandidatesObjectCount.With(prometheus.Labels{"storage_ip": hostname, "container": sharding_candidate.Container, "account": sharding_candidate.Account}).Set(float64(sharding_candidate.ObjectCount))
+		for _, shardingCandidate := range data.ShardingStats.Sharding.ShardingCandidates.Top {
+			t.containerShardingCandidatesObjectCount.With(prometheus.Labels{"storage_ip": hostname, "container": shardingCandidate.Container, "account": shardingCandidate.Account}).Set(float64(shardingCandidate.ObjectCount))
 		}
 	}
 
