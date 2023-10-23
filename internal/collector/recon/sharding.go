@@ -458,31 +458,31 @@ type Visited struct {
 
 type ShardingInProgress struct {
 	All []struct {
-		Account     string      `json:"account"`
-		Active      int         `json:"active"`
-		Cleaved     int         `json:"cleaved"`
-		Container   string      `json:"container"`
-		Created     int         `json:"created"`
-		DBState     string      `json:"db_state"`
-		Error       string      `json:"error"`
-		FileSize    int64       `json:"file_size"`
-		Found       int         `json:"found"`
-		NodeIndex   int         `json:"node_index"`
-		ObjectCount int64       `json:"object_count"`
-		Path        string      `json:"path"`
-		State       string      `json:"state"`
-		Root        string      `json:"root"`
+		Account     string `json:"account"`
+		Active      int    `json:"active"`
+		Cleaved     int    `json:"cleaved"`
+		Container   string `json:"container"`
+		Created     int    `json:"created"`
+		DBState     string `json:"db_state"`
+		Error       string `json:"error"`
+		FileSize    int64  `json:"file_size"`
+		Found       int    `json:"found"`
+		NodeIndex   int    `json:"node_index"`
+		ObjectCount int64  `json:"object_count"`
+		Path        string `json:"path"`
+		State       string `json:"state"`
+		Root        string `json:"root"`
 	} `json:"all"`
 }
 
 type Top struct {
-	Account    	  string           `json:"account"`
-	Container	  string           `json:"container"`
-	FileSize      int64            `json:"file_size"`
-	NodeIndex     int              `json:"node_index"`
-	ObjectCount   int64            `json:"object_count"`
-	Path          string           `json:"path"`
-	Root          string           `json:"root"`
+	Account     string `json:"account"`
+	Container   string `json:"container"`
+	FileSize    int64  `json:"file_size"`
+	NodeIndex   int    `json:"node_index"`
+	ObjectCount int64  `json:"object_count"`
+	Path        string `json:"path"`
+	Root        string `json:"root"`
 }
 
 type ShardingCandidates struct {
