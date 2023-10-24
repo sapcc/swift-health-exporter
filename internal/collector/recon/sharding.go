@@ -15,7 +15,6 @@
 package recon
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -527,12 +526,6 @@ func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
 	}
 
 	for hostname, dataBytes := range outputPerHost {
-		if !json.Valid(dataBytes) {
-			//Replace instances of breaking null string errors with a 0.
-			//Workaround for unmarshalling, and consistent with eventual metric export value. (0: no error/1: error)
-			dataBytes = bytes.ReplaceAll(dataBytes, []byte(`"None"`), []byte(`0`))
-		}
-
 		var data struct {
 			ShardingStats ShardingStats `json:"sharding_stats"`
 		}
@@ -593,7 +586,7 @@ func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
 			t.containerShardingInProgressActive.With(l).Set(float64(shardingProcess.Active))
 			t.containerShardingInProgressCleaved.With(l).Set(float64(shardingProcess.Cleaved))
 			t.containerShardingInProgressCreated.With(l).Set(float64(shardingProcess.Created))
-			if shardingProcess.Error != `0` {
+			if shardingProcess.Error != "None" {
 				t.containerShardingInProgressError.With(l).Set(float64(1))
 			} else {
 				t.containerShardingInProgressError.With(l).Set(float64(0))

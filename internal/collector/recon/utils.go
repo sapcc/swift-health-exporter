@@ -90,12 +90,15 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 
 		logg.Debug("output from command 'swift-recon %s': %s: %s", util.CmdArgsToStr(cmdArgs), hostname, string(data))
 
-		// sanitize JSON
+		// convert Python literals to JSON (best effort)
 		data = bytes.ReplaceAll(data, []byte(`u'`), []byte(`'`))
 		data = bytes.ReplaceAll(data, []byte(`'`), []byte(`"`))
 		data = bytes.ReplaceAll(data, []byte(`True`), []byte(`true`))
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
 		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
+		data = bytes.ReplaceAll(data, []byte(`""None""`), []byte(`"None"`))
+		//^ We sometimes observe strings with the value "None".
+		//The None -> "None" replacement introduces double quoting there which we need to compensate for.
 
 		//In the event that object store issues add escape characters to swift-recon output, strip these chracters to continue.
 		data = []byte(stripEscapeChars(string(data)))
