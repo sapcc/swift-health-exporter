@@ -105,6 +105,7 @@ swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_
 swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_ACCOUNT",container="container-sharding-1697704617.79400-0",storage_ip="10.0.0.6"} 1.496509e+06
 swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_ACCOUNT",container="sharding-1695830239.64849-2",storage_ip="10.0.0.1"} 1.448062e+06
 swift_cluster_containers_sharding_candidates_object_count{account=".shards_AUTH_ACCOUNT",container="sharding-c4f60a871b95e04ff96bb2cbbf1f96e6-1695830239.64849-3",storage_ip="10.0.0.5"} 1.681328e+06
+swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="\\x00versions\\x00sharding",storage_ip="10.0.0.5"} 2.828027e+06
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="atd-container1",storage_ip="10.0.0.2"} 1.00765e+06
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-sharding",storage_ip="10.0.0.1"} 2.828027e+06
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="container-sharding",storage_ip="10.0.0.2"} 1.983069e+06
@@ -116,7 +117,6 @@ swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT"
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="repo",storage_ip="10.0.0.4"} 1.088685e+06
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="repo",storage_ip="10.0.0.6"} 1.088685e+06
 swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="sharding3",storage_ip="10.0.0.1"} 2.818948e+06
-swift_cluster_containers_sharding_candidates_object_count{account="AUTH_ACCOUNT",container="versionssharding",storage_ip="10.0.0.5"} 2.828027e+06
 # HELP swift_cluster_containers_sharding_cleaved_attempted Container shard cleaved number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_cleaved_attempted gauge
 swift_cluster_containers_sharding_cleaved_attempted{storage_ip="10.0.0.1"} 0

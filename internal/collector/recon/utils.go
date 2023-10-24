@@ -97,23 +97,14 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
 		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
 		data = bytes.ReplaceAll(data, []byte(`""None""`), []byte(`"None"`))
+		data = bytes.ReplaceAll(data, []byte(`\x`), []byte(`\\x`))
 		//^ We sometimes observe strings with the value "None".
 		//The None -> "None" replacement introduces double quoting there which we need to compensate for.
-
-		//In the event that object store issues add escape characters to swift-recon output, strip these chracters to continue.
-		data = []byte(stripEscapeChars(string(data)))
 
 		result[hostname] = data
 	}
 
 	return result, nil
-}
-
-func stripEscapeChars(s string) string {
-	re := regexp.MustCompile(`(?:(\\\w\d\d))*`)
-	return re.ReplaceAllStringFunc(s, func(s string) string {
-		return ``
-	})
 }
 
 func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
