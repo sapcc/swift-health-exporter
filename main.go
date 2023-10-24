@@ -57,6 +57,7 @@ var cli struct {
 	ReconDriveAuditCollector       bool  `name:"collector.recon.driveaudit" help:"Enable drive audit collector."`
 	ReconQuarantinedCollector      bool  `name:"collector.recon.quarantined" help:"Enable quarantined collector."`
 	ReconReplicationCollector      bool  `name:"collector.recon.replication" help:"Enable replication collector."`
+	ReconShardingCollector         bool  `name:"collector.recon.sharding" help:"Enable sharding collector."`
 	ReconUnmountedCollector        bool  `name:"collector.recon.unmounted" help:"Enable unmounted collector."`
 	ReconUpdaterSweepTimeCollector bool  `name:"collector.recon.updater_sweep_time" help:"Enable updater sweep time collector."`
 }
@@ -77,6 +78,7 @@ func main() {
 		cli.ReconDriveAuditCollector ||
 		cli.ReconQuarantinedCollector ||
 		cli.ReconReplicationCollector ||
+		cli.ReconShardingCollector ||
 		cli.ReconUnmountedCollector ||
 		cli.ReconUpdaterSweepTimeCollector
 
@@ -107,6 +109,7 @@ func main() {
 		addTask(!(cli.NoReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
 		addTask(cli.ReconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
 		addTask(cli.ReconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		addTask(cli.ReconShardingCollector, c, s, recon.NewShardingTask(opts), exitCode)
 		addTask(cli.ReconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
 		addTask(cli.ReconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}

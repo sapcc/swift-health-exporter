@@ -78,6 +78,7 @@ that are enabled by default can be disabled by providing a
 | `recon.md5`                | yes                |
 | `recon.quarantined`        | no                 |
 | `recon.replication`        | no                 |
+| `recon.sharding`           | no                 |
 | `recon.unmounted`          | no                 |
 | `recon.updater_sweep_time` | no                 |
 
@@ -151,6 +152,51 @@ info and default timeout values.
 | `swift_cluster_containers_replication_duration` | `storage_ip` |
 | `swift_cluster_objects_replication_age`         | `storage_ip` |
 | `swift_cluster_objects_replication_duration`    | `storage_ip` |
+
+#### recon.sharding
+
+| Metric                                                       | Labels                           |
+| ------------------------------------------------------------ | -------------------------------- |
+| `swift_cluster_containers_sharding_audit_root_attempted`     | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_root_failure`       | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_root_success`       | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_root_has_overlap`   | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_root_num_overlap`   | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_shard_attempted`    | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_shard_failure`      | `storage_ip`                     |
+| `swift_cluster_containers_sharding_audit_shard_success`      | `storage_ip`                     |
+| `swift_cluster_containers_sharding_cleaved_attempted`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_cleaved_failure`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_cleaved_max_time`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_cleaved_min_time`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_cleaved_success`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_created_attempted`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_created_failure`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_created_success`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_scanned_attempted`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_scanned_failure`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_scanned_max_time`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_scanned_min_time`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_scanned_success`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_attempted`      | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_failure`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_found`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_placed`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_success`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_misplaced_unplaced`       | `storage_ip`                     |
+| `swift_cluster_containers_sharding_visited_attempted`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_visited_completed`        | `storage_ip`                     |
+| `swift_cluster_containers_sharding_visited_failure`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_visited_skipped`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_visited_success`          | `storage_ip`                     |
+| `swift_cluster_containers_sharding_in_progress_active`       | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_in_progress_cleaved`      | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_in_progress_created`      | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_in_progress_error`        | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_in_progress_found`        | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_in_progress_object_count` | `storage_ip, account, container` |
+| `swift_cluster_containers_sharding_candidates_found`         | `storage_ip`                     |
+| `swift_cluster_containers_sharding_candidates_object_count`  | `storage_ip, account, container` |
 
 #### recon.unmounted
 
