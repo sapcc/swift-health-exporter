@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.2 - 2023-12-05
+
+Changes:
+* Update dependencies including golang
+
 ## v1.0.1 - 2023-06-14
 
 Changes:
