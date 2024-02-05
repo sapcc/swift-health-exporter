@@ -6,8 +6,8 @@ require (
 	github.com/alecthomas/kong v0.8.1
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.18.0
-	github.com/sapcc/go-api-declarations v1.10.6
-	github.com/sapcc/go-bits v0.0.0-20240118093656-a4f981f7fa46
+	github.com/sapcc/go-api-declarations v1.10.8
+	github.com/sapcc/go-bits v0.0.0-20240204232020-9be969f15f30
 	go.uber.org/automaxprocs v1.5.3
 )
 
