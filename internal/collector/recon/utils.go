@@ -97,11 +97,11 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 		data = bytes.ReplaceAll(data, []byte(`False`), []byte(`false`))
 		data = bytes.ReplaceAll(data, []byte(`None`), []byte(`"None"`))
 		data = bytes.ReplaceAll(data, []byte(`""None""`), []byte(`"None"`))
-		//^ We sometimes observe strings with the value "None".
-		//The None -> "None" replacement introduces double quoting there which we need to compensate for.
+		// ^ We sometimes observe strings with the value "None".
+		// The None -> "None" replacement introduces double quoting there which we need to compensate for.
 		data = bytes.ReplaceAll(data, []byte(`\x`), []byte(`\\x`))
-		//^ Swift renames sharding containers to include \x which is interpreted as an invalid escape character.
-		//Prefix with an additional `\` to pass unmarshalling and preserve naming.
+		// ^ Swift renames sharding containers to include \x which is interpreted as an invalid escape character.
+		// Prefix with an additional `\` to pass unmarshalling and preserve naming.
 
 		result[hostname] = data
 	}
