@@ -15,6 +15,7 @@
 package recon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -108,7 +109,7 @@ var md5OutputBlockRx = regexp.MustCompile(
 	`(?m)^.* Checking ([\.a-zA-Z0-9_]+) md5sums?\s*((?:(?:->|!!).*\n)*)\s*[0-9]+/[0-9]+ hosts matched, [0-9]+ error.*$`)
 
 // UpdateMetrics implements the collector.Task interface.
-func (t *MD5Task) UpdateMetrics() (map[string]int, error) {
+func (t *MD5Task) UpdateMetrics(ctx context.Context) (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{
@@ -117,7 +118,7 @@ func (t *MD5Task) UpdateMetrics() (map[string]int, error) {
 	}
 
 	var matchList [][][]byte
-	out, err := util.RunCommandWithTimeout(t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
+	out, err := util.RunCommandWithTimeout(ctx, t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
 	if err == nil {
 		matchList = md5OutputBlockRx.FindAllSubmatch(out, -1)
 		if len(matchList) == 0 {

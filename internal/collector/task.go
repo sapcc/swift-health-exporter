@@ -15,6 +15,7 @@
 package collector
 
 import (
+	"context"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,7 +28,7 @@ type Task interface {
 	DescribeMetrics(ch chan<- *prometheus.Desc)
 	CollectMetrics(ch chan<- prometheus.Metric)
 	// UpdateMetrics returns a map of query to its exit code, and an error.
-	UpdateMetrics() (queries map[string]int, err error)
+	UpdateMetrics(ctx context.Context) (queries map[string]int, err error)
 }
 
 // TaskError is the error type that a task can return.

@@ -15,6 +15,7 @@
 package recon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -107,7 +108,7 @@ func (t *ReplicationTask) CollectMetrics(ch chan<- prometheus.Metric) {
 }
 
 // UpdateMetrics implements the collector.Task interface.
-func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
+func (t *ReplicationTask) UpdateMetrics(ctx context.Context) (map[string]int, error) {
 	queries := make(map[string]int)
 	serverTypes := []string{"account", "container", "object"}
 	for _, server := range serverTypes {
@@ -134,7 +135,7 @@ func (t *ReplicationTask) UpdateMetrics() (map[string]int, error) {
 		}
 
 		currentTime := float64(time.Now().Unix())
-		outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, cmdArgs...)
+		outputPerHost, err := getSwiftReconOutputPerHost(ctx, t.opts.CtxTimeout, t.opts.PathToExecutable, cmdArgs...)
 		if err != nil {
 			queries[q] = 1
 			e.Inner = err

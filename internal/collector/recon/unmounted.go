@@ -15,6 +15,7 @@
 package recon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -62,7 +63,7 @@ func (t *UnmountedTask) CollectMetrics(ch chan<- prometheus.Metric) {
 }
 
 // UpdateMetrics implements the collector.Task interface.
-func (t *UnmountedTask) UpdateMetrics() (map[string]int, error) {
+func (t *UnmountedTask) UpdateMetrics(ctx context.Context) (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{
@@ -70,7 +71,7 @@ func (t *UnmountedTask) UpdateMetrics() (map[string]int, error) {
 		CmdArgs: t.cmdArgs,
 	}
 
-	outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
+	outputPerHost, err := getSwiftReconOutputPerHost(ctx, t.opts.CtxTimeout, t.opts.PathToExecutable, t.cmdArgs...)
 	if err != nil {
 		queries[q] = 1
 		e.Inner = err

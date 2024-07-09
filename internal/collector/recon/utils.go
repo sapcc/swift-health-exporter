@@ -16,6 +16,7 @@ package recon
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"regexp"
@@ -109,8 +110,8 @@ func splitOutputPerHost(output []byte, cmdArgs []string) (map[string][]byte, err
 	return result, nil
 }
 
-func getSwiftReconOutputPerHost(ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
-	out, err := util.RunCommandWithTimeout(ctxTimeout, pathToExecutable, cmdArgs...)
+func getSwiftReconOutputPerHost(ctx context.Context, ctxTimeout time.Duration, pathToExecutable string, cmdArgs ...string) (map[string][]byte, error) {
+	out, err := util.RunCommandWithTimeout(ctx, ctxTimeout, pathToExecutable, cmdArgs...)
 	if err != nil {
 		return nil, err
 	}
