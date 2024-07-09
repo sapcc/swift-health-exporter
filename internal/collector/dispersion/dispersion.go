@@ -16,6 +16,7 @@ package dispersion
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"regexp"
@@ -150,7 +151,7 @@ func (t *ReportTask) CollectMetrics(ch chan<- prometheus.Metric) {
 }
 
 // UpdateMetrics implements the collector.Task interface.
-func (t *ReportTask) UpdateMetrics() (map[string]int, error) {
+func (t *ReportTask) UpdateMetrics(ctx context.Context) (map[string]int, error) {
 	q := util.CmdArgsToStr(t.cmdArgs)
 	queries := map[string]int{q: 0}
 	e := &collector.TaskError{
@@ -158,7 +159,7 @@ func (t *ReportTask) UpdateMetrics() (map[string]int, error) {
 		CmdArgs: t.cmdArgs,
 	}
 
-	out, err := util.RunCommandWithTimeout(t.ctxTimeout, t.pathToExecutable, t.cmdArgs...)
+	out, err := util.RunCommandWithTimeout(ctx, t.ctxTimeout, t.pathToExecutable, t.cmdArgs...)
 	if err != nil {
 		queries[q] = 1
 		e.Inner = err

@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 	"time"
@@ -78,7 +79,7 @@ func testCollector(t *testing.T, dispersionReportPath, reconPath, fixturesPath s
 
 	registry.MustRegister(c)
 
-	s.UpdateAllMetrics()
+	s.UpdateAllMetrics(context.Background())
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",

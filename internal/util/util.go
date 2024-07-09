@@ -23,8 +23,8 @@ import (
 
 // RunCommandWithTimeout runs a command with the provided timeout duration and returns its
 // combined output.
-func RunCommandWithTimeout(timeout time.Duration, name string, args ...string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+func RunCommandWithTimeout(ctx context.Context, timeout time.Duration, name string, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	return exec.CommandContext(ctx, name, args...).CombinedOutput()
 }

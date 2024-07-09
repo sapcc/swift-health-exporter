@@ -15,6 +15,7 @@
 package collector
 
 import (
+	"context"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -44,10 +45,10 @@ func NewScraper(maxFailures int) *Scraper {
 }
 
 // Run updates the metrics for all tasks periodically as per the scrapeInterval.
-func (s *Scraper) Run() {
+func (s *Scraper) Run(ctx context.Context) {
 	for {
 		startedAt := time.Now()
-		s.UpdateAllMetrics()
+		s.UpdateAllMetrics(ctx)
 		// Slow down if UpdateAllMetrics() finished faster than the desired scrape
 		// interval.
 		sleepDuration := scrapeInterval - time.Since(startedAt)
@@ -57,11 +58,11 @@ func (s *Scraper) Run() {
 	}
 }
 
-func (s *Scraper) UpdateAllMetrics() {
+func (s *Scraper) UpdateAllMetrics(ctx context.Context) {
 	for _, t := range s.Tasks {
 		name := t.Name()
 		exitCodeGaugeVec := s.ExitCodeGaugeVec[name]
-		queries, err := t.UpdateMetrics()
+		queries, err := t.UpdateMetrics(ctx)
 		if err == nil {
 			s.FailureCount[name] = 0
 		} else {

@@ -15,6 +15,7 @@
 package recon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -509,7 +510,7 @@ type ShardingStats struct {
 }
 
 // UpdateMetrics implements the collector.Task interface.
-func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
+func (t *ShardingTask) UpdateMetrics(ctx context.Context) (map[string]int, error) {
 	cmdArgs := t.cmdArgs
 	q := util.CmdArgsToStr(cmdArgs)
 	queries := map[string]int{q: 0}
@@ -518,7 +519,7 @@ func (t *ShardingTask) UpdateMetrics() (map[string]int, error) {
 		CmdArgs: cmdArgs,
 	}
 
-	outputPerHost, err := getSwiftReconOutputPerHost(t.opts.CtxTimeout, t.opts.PathToExecutable, cmdArgs...)
+	outputPerHost, err := getSwiftReconOutputPerHost(ctx, t.opts.CtxTimeout, t.opts.PathToExecutable, cmdArgs...)
 	if err != nil {
 		queries[q] = 1
 		e.Inner = err

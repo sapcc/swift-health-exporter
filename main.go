@@ -116,12 +116,14 @@ func main() {
 
 	prometheus.MustRegister(c)
 
+	ctx := httpext.ContextWithSIGINT(context.Background(), 1*time.Second)
+
 	// Run the scraper at least once so that the metric values are updated before a
 	// Prometheus scrape.
-	s.UpdateAllMetrics()
+	s.UpdateAllMetrics(ctx)
 
 	// Start scraper loop.
-	go s.Run()
+	go s.Run(ctx)
 
 	// Collect HTTP handlers.
 	handler := httpapi.Compose(
@@ -133,7 +135,6 @@ func main() {
 	smux.Handle("/", handler)
 	smux.Handle("/metrics", promhttp.Handler())
 
-	ctx := httpext.ContextWithSIGINT(context.Background(), 1*time.Second)
 	must.Succeed(httpext.ListenAndServeContext(ctx, cli.WebListenAddress, smux))
 }
 
