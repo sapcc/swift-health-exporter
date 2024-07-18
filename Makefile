@@ -25,6 +25,7 @@ prepare-static-check: FORCE
 GO_BUILDFLAGS = -mod vendor
 GO_LDFLAGS =
 GO_TESTENV =
+GO_BUILDENV =
 
 # These definitions are overridable, e.g. to provide fixed version/commit values when
 # no .git directory is present or to provide a fixed build date for reproducibility.
@@ -35,19 +36,19 @@ BININFO_BUILD_DATE  ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 build-all: build/swift-health-exporter build/mock-swift-dispersion-report build/mock-swift-dispersion-report-with-errors build/mock-swift-recon build/mock-swift-recon-with-errors
 
 build/swift-health-exporter: FORCE
-	go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=swift-health-exporter -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/swift-health-exporter .
+	@env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=swift-health-exporter -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/swift-health-exporter .
 
 build/mock-swift-dispersion-report: FORCE
-	go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-dispersion-report -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-dispersion-report ./test/cmd/mock-swift-dispersion-report
+	@env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-dispersion-report -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-dispersion-report ./test/cmd/mock-swift-dispersion-report
 
 build/mock-swift-dispersion-report-with-errors: FORCE
-	go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-dispersion-report-with-errors -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-dispersion-report-with-errors ./test/cmd/mock-swift-dispersion-report-with-errors
+	@env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-dispersion-report-with-errors -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-dispersion-report-with-errors ./test/cmd/mock-swift-dispersion-report-with-errors
 
 build/mock-swift-recon: FORCE
-	go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-recon -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-recon ./test/cmd/mock-swift-recon
+	@env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-recon -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-recon ./test/cmd/mock-swift-recon
 
 build/mock-swift-recon-with-errors: FORCE
-	go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-recon-with-errors -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-recon-with-errors ./test/cmd/mock-swift-recon-with-errors
+	@env $(GO_BUILDENV) go build $(GO_BUILDFLAGS) -ldflags '-s -w -X github.com/sapcc/go-api-declarations/bininfo.binName=mock-swift-recon-with-errors -X github.com/sapcc/go-api-declarations/bininfo.version=$(BININFO_VERSION) -X github.com/sapcc/go-api-declarations/bininfo.commit=$(BININFO_COMMIT_HASH) -X github.com/sapcc/go-api-declarations/bininfo.buildDate=$(BININFO_BUILD_DATE) $(GO_LDFLAGS)' -o build/mock-swift-recon-with-errors ./test/cmd/mock-swift-recon-with-errors
 
 DESTDIR =
 ifeq ($(shell uname -s),Darwin)
@@ -122,6 +123,7 @@ vars: FORCE
 	@printf "BININFO_COMMIT_HASH=$(BININFO_COMMIT_HASH)\n"
 	@printf "BININFO_VERSION=$(BININFO_VERSION)\n"
 	@printf "DESTDIR=$(DESTDIR)\n"
+	@printf "GO_BUILDENV=$(GO_BUILDENV)\n"
 	@printf "GO_BUILDFLAGS=$(GO_BUILDFLAGS)\n"
 	@printf "GO_COVERPKGS=$(GO_COVERPKGS)\n"
 	@printf "GO_LDFLAGS=$(GO_LDFLAGS)\n"
