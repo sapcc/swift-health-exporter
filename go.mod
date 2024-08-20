@@ -5,7 +5,7 @@ go 1.23
 require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/gorilla/mux v1.8.1
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.1
 	github.com/sapcc/go-api-declarations v1.12.4
 	github.com/sapcc/go-bits v0.0.0-20240815085238-fce0691187a2
 	go.uber.org/automaxprocs v1.5.3
