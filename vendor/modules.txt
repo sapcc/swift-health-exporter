@@ -1,4 +1,4 @@
-# github.com/alecthomas/kong v0.9.0
+# github.com/alecthomas/kong v1.2.1
 ## explicit; go 1.18
 github.com/alecthomas/kong
 # github.com/beorn7/perks v1.0.1
