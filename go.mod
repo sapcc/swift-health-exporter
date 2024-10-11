@@ -6,8 +6,8 @@ require (
 	github.com/alecthomas/kong v1.2.1
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.20.4
-	github.com/sapcc/go-api-declarations v1.12.6
-	github.com/sapcc/go-bits v0.0.0-20241003120606-28dc119912ca
+	github.com/sapcc/go-api-declarations v1.12.8
+	github.com/sapcc/go-bits v0.0.0-20241010083035-71b8c70d91ad
 	go.uber.org/automaxprocs v1.6.0
 )
 
@@ -20,6 +20,6 @@ require (
 	github.com/prometheus/common v0.60.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
-	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 )
