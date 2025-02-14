@@ -1,6 +1,6 @@
 module github.com/sapcc/swift-health-exporter
 
-go 1.23
+go 1.24
 
 require (
 	github.com/alecthomas/kong v1.7.0
