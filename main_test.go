@@ -79,7 +79,7 @@ func testCollector(t *testing.T, dispersionReportPath, reconPath, fixturesPath s
 
 	registry.MustRegister(c)
 
-	s.UpdateAllMetrics(context.Background())
+	s.UpdateAllMetrics(t.Context())
 	assert.HTTPRequest{
 		Method:       "GET",
 		Path:         "/metrics",
