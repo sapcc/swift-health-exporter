@@ -17,36 +17,54 @@ package main
 import (
 	"os"
 
-	"github.com/alecthomas/kong"
+	flag "github.com/spf13/pflag"
 )
 
-var cli struct {
-	Timeout     int    `short:"t" help:"Time to wait for a response from a server."`
-	ServerType  string `arg:"" optional:"" help:"Type of server."`
-	Verbose     bool   `short:"v" help:"Print verbose info."`
-	Diskusage   bool   `short:"d" name:"diskusage" help:"Get disk usage stats."`
-	Driveaudit  bool   `name:"driveaudit" help:"Get drive audit error stats."`
-	MD5         bool   `name:"md5" help:"Get md5sum of servers ring and compare to local copy."`
-	Quarantined bool   `short:"q" help:"Get cluster quarantine stats."`
-	Replication bool   `short:"r" help:"Get replication stats."`
-	Sharding    bool   `short:"s" help:"Check container sharding stats."`
-	Unmounted   bool   `short:"u" help:"Check cluster for unmounted devices."`
-	Updater     bool   `help:"Get updater stats."`
+var (
+	timeout     int
+	serverType  string
+	verbose     bool
+	diskusage   bool
+	driveaudit  bool
+	md5         bool
+	quarantined bool
+	replication bool
+	sharding    bool
+	unmounted   bool
+	updater     bool
+)
+
+func init() {
+	flag.IntVarP(&timeout, "timeout", "t", 0, "Time to wait for a response from a server.")
+	flag.BoolVarP(&verbose, "verbose", "v", false, "Print verbose info.")
+	flag.BoolVarP(&diskusage, "diskusage", "d", false, "Get disk usage stats.")
+	flag.BoolVar(&driveaudit, "driveaudit", false, "Get drive audit error stats.")
+	flag.BoolVar(&md5, "md5", false, "Get md5sum of servers ring and compare to local copy.")
+	flag.BoolVarP(&quarantined, "quarantined", "q", false, "Get cluster quarantine stats.")
+	flag.BoolVarP(&replication, "replication", "r", false, "Get replication stats.")
+	flag.BoolVarP(&sharding, "sharding", "s", false, "Check container sharding stats.")
+	flag.BoolVarP(&unmounted, "unmounted", "u", false, "Check cluster for unmounted devices.")
+	flag.BoolVar(&updater, "updater", false, "Get updater stats.")
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) > 0 {
+		serverType = args[0]
+	}
 }
 
 func main() {
-	kong.Parse(&cli)
 	switch {
-	case cli.Diskusage && cli.Verbose:
+	case diskusage && verbose:
 		os.Stdout.Write(diskUsageVerboseData)
-	case cli.Driveaudit && cli.Verbose:
+	case driveaudit && verbose:
 		os.Stdout.Write(driveAuditVerboseData)
-	case cli.MD5 && cli.Verbose:
+	case md5 && verbose:
 		os.Stdout.Write(md5Data)
-	case cli.Quarantined && cli.Verbose:
+	case quarantined && verbose:
 		os.Stdout.Write(quarantinedVerboseData)
-	case cli.Replication && cli.Verbose:
-		switch cli.ServerType {
+	case replication && verbose:
+		switch serverType {
 		case "account":
 			os.Stdout.Write(accountReplVerboseData)
 		case "container":
@@ -54,12 +72,12 @@ func main() {
 		case "object":
 			os.Stdout.Write(objectReplVerboseData)
 		}
-	case cli.Sharding:
+	case sharding:
 		os.Stdout.Write(shardingVerboseData)
-	case cli.Unmounted && cli.Verbose:
+	case unmounted && verbose:
 		os.Stdout.Write(unmountedVerboseData)
-	case cli.Updater && cli.Verbose:
-		switch cli.ServerType {
+	case updater && verbose:
+		switch serverType {
 		case "container":
 			os.Stdout.Write(containerUpdaterVerboseData)
 		case "object":
