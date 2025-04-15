@@ -34,7 +34,7 @@ var (
 	updater     bool
 )
 
-func init() {
+func main() {
 	flag.IntVarP(&timeout, "timeout", "t", 0, "Time to wait for a response from a server.")
 	flag.BoolVarP(&verbose, "verbose", "v", false, "Print verbose info.")
 	flag.BoolVarP(&diskusage, "diskusage", "d", false, "Get disk usage stats.")
@@ -51,9 +51,7 @@ func init() {
 	if len(args) > 0 {
 		serverType = args[0]
 	}
-}
 
-func main() {
 	switch {
 	case diskusage && verbose:
 		os.Stdout.Write(diskUsageVerboseData)

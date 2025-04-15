@@ -33,12 +33,10 @@ ERROR: 10.0.0.2:6001/sdb-02: Giving up on /012/AUTH_012/dispersion_objects_0/dis
 
 var dumpJSON bool
 
-func init() {
+func main() {
 	flag.BoolVarP(&dumpJSON, "dump-json", "j", false, "Dump dispersion report in json format.")
 	flag.Parse()
-}
 
-func main() {
 	if dumpJSON {
 		os.Stdout.Write(reportData)
 	}

@@ -63,7 +63,7 @@ var (
 	reconUpdaterSweepTimeCollector bool
 )
 
-func init() {
+func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
 	flag.BoolVarP(&showVersion, "version", "v", false, "Report version string and exit.")
 	flag.StringVar(&webListenAddress, "web.listen-address", "0.0.0.0:9520", "Exporter listening address.")
@@ -89,9 +89,7 @@ func init() {
 	if err != nil {
 		debug = val
 	}
-}
 
-func main() {
 	if showVersion {
 		fmt.Println(bininfo.VersionOr("unknown"))
 		return

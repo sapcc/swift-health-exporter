@@ -27,12 +27,10 @@ ERROR: 10.0.0.2:6000/sdb-01 is unmounted -- This will cause replicas designated 
 
 var dumpJSON bool
 
-func init() {
+func main() {
 	flag.BoolVarP(&dumpJSON, "dump-json", "j", false, "Dump dispersion report in json format.")
 	flag.Parse()
-}
 
-func main() {
 	if dumpJSON {
 		os.Stdout.Write(reportData)
 	}
