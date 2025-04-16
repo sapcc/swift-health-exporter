@@ -22,7 +22,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/alecthomas/kong"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -32,6 +31,8 @@ import (
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/go-bits/must"
+	"github.com/sapcc/go-bits/osext"
+	flag "github.com/spf13/pflag"
 	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
@@ -39,60 +40,80 @@ import (
 	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
 )
 
-var cli struct {
-	Debug            bool   `env:"DEBUG" help:"Enable debug mode."`
-	ShowVersion      bool   `name:"version" short:"v" help:"Report version string and exit."`
-	WebListenAddress string `name:"web.listen-address" default:"0.0.0.0:9520" help:"Exporter listening address."`
-
-	MaxFailures int `name:"collector.max-failures" default:"4" help:"Max allowed failures for a specific collector."`
-
-	// In large Swift clusters the dispersion-report tool takes time, therefore we have a higher default timeout value.
-	DispersionTimeout   int64 `name:"dispersion.timeout" default:"20" help:"Timeout value (in seconds) for the context that is used while executing the swift-dispersion-report command."`
-	DispersionCollector bool  `name:"collector.dispersion" help:"Enable dispersion collector."`
-
-	ReconTimeout                   int64 `name:"recon.timeout" default:"4" help:"Timeout value (in seconds) for the context that is used while executing the swift-recon command."`
-	ReconHostTimeout               int   `name:"recon.timeout-host" default:"1" help:"Timeout value (in seconds) that is used for the '--timeout' flag (host timeout) of the swift-recon command."`
-	NoReconMD5Collector            bool  `name:"no-collector.recon.md5" help:"Disable MD5 collector."`
-	ReconDiskUsageCollector        bool  `name:"collector.recon.diskusage" help:"Enable disk usage collector."`
-	ReconDriveAuditCollector       bool  `name:"collector.recon.driveaudit" help:"Enable drive audit collector."`
-	ReconQuarantinedCollector      bool  `name:"collector.recon.quarantined" help:"Enable quarantined collector."`
-	ReconReplicationCollector      bool  `name:"collector.recon.replication" help:"Enable replication collector."`
-	ReconShardingCollector         bool  `name:"collector.recon.sharding" help:"Enable sharding collector."`
-	ReconUnmountedCollector        bool  `name:"collector.recon.unmounted" help:"Enable unmounted collector."`
-	ReconUpdaterSweepTimeCollector bool  `name:"collector.recon.updater_sweep_time" help:"Enable updater sweep time collector."`
-}
-
 func main() {
-	kong.Parse(&cli)
-	if cli.ShowVersion {
+	var (
+		debug            bool
+		showVersion      bool
+		webListenAddress string
+
+		maxFailures int
+
+		// In large Swift clusters the dispersion-report tool takes time, therefore we have a higher default timeout value.
+		dispersionTimeout   int64
+		dispersionCollector bool
+
+		reconTimeout                   int64
+		reconHostTimeout               int
+		noReconMD5Collector            bool
+		reconDiskUsageCollector        bool
+		reconDriveAuditCollector       bool
+		reconQuarantinedCollector      bool
+		reconReplicationCollector      bool
+		reconShardingCollector         bool
+		reconUnmountedCollector        bool
+		reconUpdaterSweepTimeCollector bool
+	)
+
+	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
+	flag.BoolVarP(&showVersion, "version", "v", false, "Report version string and exit.")
+	flag.StringVar(&webListenAddress, "web.listen-address", "0.0.0.0:9520", "Exporter listening address.")
+
+	flag.IntVar(&maxFailures, "collector.max-failures", 4, "Max allowed failures for a specific collector.")
+
+	flag.Int64Var(&dispersionTimeout, "dispersion.timeout", 20, "Timeout value (in seconds) for the context that is used while executing the swift-dispersion-report command.")
+	flag.BoolVar(&dispersionCollector, "collector.dispersion", false, "Enable dispersion collector.")
+
+	flag.Int64Var(&reconTimeout, "recon.timeout", 4, "Timeout value (in seconds) for the context that is used while executing the swift-recon command.")
+	flag.IntVar(&reconHostTimeout, "recon.timeout-host", 1, "Timeout value (in seconds) that is used for the '--timeout' flag (host timeout) of the swift-recon command.")
+	flag.BoolVar(&noReconMD5Collector, "no-collector.recon.md5", false, "Disable MD5 collector.")
+	flag.BoolVar(&reconDiskUsageCollector, "collector.recon.diskusage", false, "Enable disk usage collector.")
+	flag.BoolVar(&reconDriveAuditCollector, "collector.recon.driveaudit", false, "Enable drive audit collector.")
+	flag.BoolVar(&reconQuarantinedCollector, "collector.recon.quarantined", false, "Enable quarantined collector.")
+	flag.BoolVar(&reconReplicationCollector, "collector.recon.replication", false, "Enable replication collector.")
+	flag.BoolVar(&reconShardingCollector, "collector.recon.sharding", false, "Enable sharding collector.")
+	flag.BoolVar(&reconUnmountedCollector, "collector.recon.unmounted", false, "Enable unmounted collector.")
+	flag.BoolVar(&reconUpdaterSweepTimeCollector, "collector.recon.updater_sweep_time", false, "Enable updater sweep time collector.")
+	flag.Parse()
+
+	if showVersion {
 		fmt.Println(bininfo.VersionOr("unknown"))
 		return
 	}
 
-	logg.ShowDebug = cli.Debug
+	logg.ShowDebug = debug || osext.GetenvBool("DEBUG")
 	undoMaxprocs := must.Return(maxprocs.Set(maxprocs.Logger(logg.Debug)))
 	defer undoMaxprocs()
 
-	reconCollectorEnabled := !(cli.NoReconMD5Collector) ||
-		cli.ReconDiskUsageCollector ||
-		cli.ReconDriveAuditCollector ||
-		cli.ReconQuarantinedCollector ||
-		cli.ReconReplicationCollector ||
-		cli.ReconShardingCollector ||
-		cli.ReconUnmountedCollector ||
-		cli.ReconUpdaterSweepTimeCollector
+	reconCollectorEnabled := !(noReconMD5Collector) ||
+		reconDiskUsageCollector ||
+		reconDriveAuditCollector ||
+		reconQuarantinedCollector ||
+		reconReplicationCollector ||
+		reconShardingCollector ||
+		reconUnmountedCollector ||
+		reconUpdaterSweepTimeCollector
 
-	if !reconCollectorEnabled && !(cli.DispersionCollector) {
+	if !reconCollectorEnabled && !(dispersionCollector) {
 		logg.Fatal("no collector enabled")
 	}
 
 	registry := prometheus.DefaultRegisterer
 	c := collector.New()
-	s := collector.NewScraper(cli.MaxFailures)
+	s := collector.NewScraper(maxFailures)
 
-	if cli.DispersionCollector {
+	if dispersionCollector {
 		execPath := getExecutablePath("SWIFT_DISPERSION_REPORT_PATH", "swift-dispersion-report")
-		t := time.Duration(cli.DispersionTimeout) * time.Second
+		t := time.Duration(dispersionTimeout) * time.Second
 		exitCode := dispersion.GetTaskExitCodeGaugeVec(registry)
 		addTask(true, c, s, dispersion.NewReportTask(execPath, t), exitCode)
 	}
@@ -101,17 +122,17 @@ func main() {
 		exitCode := recon.GetTaskExitCodeGaugeVec(registry)
 		opts := &recon.TaskOpts{
 			PathToExecutable: getExecutablePath("SWIFT_RECON_PATH", "swift-recon"),
-			HostTimeout:      cli.ReconHostTimeout,
-			CtxTimeout:       time.Duration(cli.ReconTimeout) * time.Second,
+			HostTimeout:      reconHostTimeout,
+			CtxTimeout:       time.Duration(reconTimeout) * time.Second,
 		}
-		addTask(cli.ReconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
-		addTask(cli.ReconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
-		addTask(!(cli.NoReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
-		addTask(cli.ReconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
-		addTask(cli.ReconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
-		addTask(cli.ReconShardingCollector, c, s, recon.NewShardingTask(opts), exitCode)
-		addTask(cli.ReconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
-		addTask(cli.ReconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
+		addTask(reconDiskUsageCollector, c, s, recon.NewDiskUsageTask(opts), exitCode)
+		addTask(reconDriveAuditCollector, c, s, recon.NewDriveAuditTask(opts), exitCode)
+		addTask(!(noReconMD5Collector), c, s, recon.NewMD5Task(opts), exitCode)
+		addTask(reconQuarantinedCollector, c, s, recon.NewQuarantinedTask(opts), exitCode)
+		addTask(reconReplicationCollector, c, s, recon.NewReplicationTask(opts), exitCode)
+		addTask(reconShardingCollector, c, s, recon.NewShardingTask(opts), exitCode)
+		addTask(reconUnmountedCollector, c, s, recon.NewUnmountedTask(opts), exitCode)
+		addTask(reconUpdaterSweepTimeCollector, c, s, recon.NewUpdaterSweepTask(opts), exitCode)
 	}
 
 	prometheus.MustRegister(c)
@@ -135,7 +156,7 @@ func main() {
 	smux.Handle("/", handler)
 	smux.Handle("/metrics", promhttp.Handler())
 
-	must.Succeed(httpext.ListenAndServeContext(ctx, cli.WebListenAddress, smux))
+	must.Succeed(httpext.ListenAndServeContext(ctx, webListenAddress, smux))
 }
 
 // getExecutablePath gets the path to an executable from the environment
