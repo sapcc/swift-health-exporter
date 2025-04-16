@@ -20,21 +20,21 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-var (
-	timeout     int
-	serverType  string
-	verbose     bool
-	diskusage   bool
-	driveaudit  bool
-	md5         bool
-	quarantined bool
-	replication bool
-	sharding    bool
-	unmounted   bool
-	updater     bool
-)
-
 func main() {
+	var (
+		timeout     int
+		serverType  string
+		verbose     bool
+		diskusage   bool
+		driveaudit  bool
+		md5         bool
+		quarantined bool
+		replication bool
+		sharding    bool
+		unmounted   bool
+		updater     bool
+	)
+
 	flag.IntVarP(&timeout, "timeout", "t", 0, "Time to wait for a response from a server.")
 	flag.BoolVarP(&verbose, "verbose", "v", false, "Print verbose info.")
 	flag.BoolVarP(&diskusage, "diskusage", "d", false, "Get disk usage stats.")

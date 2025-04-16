@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -32,6 +31,7 @@ import (
 	"github.com/sapcc/go-bits/httpext"
 	"github.com/sapcc/go-bits/logg"
 	"github.com/sapcc/go-bits/must"
+	"github.com/sapcc/go-bits/osext"
 	flag "github.com/spf13/pflag"
 	"go.uber.org/automaxprocs/maxprocs"
 
@@ -40,30 +40,30 @@ import (
 	"github.com/sapcc/swift-health-exporter/internal/collector/recon"
 )
 
-var (
-	debug            bool
-	showVersion      bool
-	webListenAddress string
-
-	maxFailures int
-
-	// In large Swift clusters the dispersion-report tool takes time, therefore we have a higher default timeout value.
-	dispersionTimeout   int64
-	dispersionCollector bool
-
-	reconTimeout                   int64
-	reconHostTimeout               int
-	noReconMD5Collector            bool
-	reconDiskUsageCollector        bool
-	reconDriveAuditCollector       bool
-	reconQuarantinedCollector      bool
-	reconReplicationCollector      bool
-	reconShardingCollector         bool
-	reconUnmountedCollector        bool
-	reconUpdaterSweepTimeCollector bool
-)
-
 func main() {
+	var (
+		debug            bool
+		showVersion      bool
+		webListenAddress string
+
+		maxFailures int
+
+		// In large Swift clusters the dispersion-report tool takes time, therefore we have a higher default timeout value.
+		dispersionTimeout   int64
+		dispersionCollector bool
+
+		reconTimeout                   int64
+		reconHostTimeout               int
+		noReconMD5Collector            bool
+		reconDiskUsageCollector        bool
+		reconDriveAuditCollector       bool
+		reconQuarantinedCollector      bool
+		reconReplicationCollector      bool
+		reconShardingCollector         bool
+		reconUnmountedCollector        bool
+		reconUpdaterSweepTimeCollector bool
+	)
+
 	flag.BoolVar(&debug, "debug", false, "Enable debug mode.")
 	flag.BoolVarP(&showVersion, "version", "v", false, "Report version string and exit.")
 	flag.StringVar(&webListenAddress, "web.listen-address", "0.0.0.0:9520", "Exporter listening address.")
@@ -85,17 +85,12 @@ func main() {
 	flag.BoolVar(&reconUpdaterSweepTimeCollector, "collector.recon.updater_sweep_time", false, "Enable updater sweep time collector.")
 	flag.Parse()
 
-	val, err := strconv.ParseBool(os.Getenv("DEBUG"))
-	if err != nil {
-		debug = val
-	}
-
 	if showVersion {
 		fmt.Println(bininfo.VersionOr("unknown"))
 		return
 	}
 
-	logg.ShowDebug = debug
+	logg.ShowDebug = debug || osext.GetenvBool("DEBUG")
 	undoMaxprocs := must.Return(maxprocs.Set(maxprocs.Logger(logg.Debug)))
 	defer undoMaxprocs()
 
