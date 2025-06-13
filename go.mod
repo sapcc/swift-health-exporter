@@ -5,8 +5,8 @@ go 1.24
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.22.0
-	github.com/sapcc/go-api-declarations v1.15.0
-	github.com/sapcc/go-bits v0.0.0-20250523091838-d2760e792019
+	github.com/sapcc/go-api-declarations v1.16.0
+	github.com/sapcc/go-bits v0.0.0-20250612150039-67ead56083c6
 	github.com/spf13/pflag v1.0.6
 	go.uber.org/automaxprocs v1.6.0
 )
@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.64.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/sergi/go-diff v1.3.1 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
