@@ -21,6 +21,7 @@ coverageTest:
   only: '/collector'
 
 golang:
+  autoupdateableDeps: ^github.com/(?:sapcc|sap-cloud-infrastructure)/
   setGoModVersion: true
 
 golangciLint:
