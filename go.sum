@@ -5,6 +5,8 @@ github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/gofrs/uuid/v5 v5.3.2 h1:2jfO8j3XgSwlz/wHqemAEugfnTlikAYHhnqQ8Xh4fE0=
+github.com/gofrs/uuid/v5 v5.3.2/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/gorilla/mux v1.8.1 h1:TuBL49tXwgrFYWhqrNgrUNEY92u81SPhu7sTdzQEiWY=
@@ -32,8 +34,8 @@ github.com/prometheus/procfs v0.15.1 h1:YagwOFzUgYfKKHX6Dr+sHT7km/hxC76UB0leargg
 github.com/prometheus/procfs v0.15.1/go.mod h1:fB45yRUv8NstnjriLhBQLuOUt+WW4BsoGhij/e3PBqk=
 github.com/sapcc/go-api-declarations v1.16.0 h1:uMB6SFPBAClusbAWwmeMeUi5eHVf9FpZWWf3VwPrsIg=
 github.com/sapcc/go-api-declarations v1.16.0/go.mod h1:MWmLjmvjftgyAugNUfIhsDsHIzXH1pn32cWLZpiluKg=
-github.com/sapcc/go-bits v0.0.0-20250626145224-6afa1101f97e h1:7fUg54eb9KndmGTMpVSfp95ufDl+1zQnNJhg0oZwRd8=
-github.com/sapcc/go-bits v0.0.0-20250626145224-6afa1101f97e/go.mod h1:PBAahURDrSPj1Dn39T34ZXLu4chnrPgH0HEzTLQNvtw=
+github.com/sapcc/go-bits v0.0.0-20250703114242-4e8a4e02e33f h1:BVW3S2jNVBTs6cDXYzeLqbFFpaAv7jvOag+bx9DRXNc=
+github.com/sapcc/go-bits v0.0.0-20250703114242-4e8a4e02e33f/go.mod h1:PBAahURDrSPj1Dn39T34ZXLu4chnrPgH0HEzTLQNvtw=
 github.com/sergi/go-diff v1.4.0 h1:n/SP9D5ad1fORl+llWyN+D6qoUETXNZARKjyY2/KVCw=
 github.com/sergi/go-diff v1.4.0/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/spf13/pflag v1.0.6 h1:jFzHGLGAlb3ruxLB8MhbI6A8+AQX/2eW4qeyNZXNp2o=
