@@ -33,7 +33,6 @@ goReleaser:
 githubWorkflow:
   ci:
     enabled: true
-    coveralls: true
   release:
     enabled: true
 
