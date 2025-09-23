@@ -116,14 +116,6 @@ SPDX-License-Identifier = "BSD-3-Clause"
 
 [[annotations]]
 path = [
-  "vendor/github.com/grafana/regexp/**",
-]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Other"
-SPDX-License-Identifier = "BSD-3-Clause"
-
-[[annotations]]
-path = [
   "vendor/github.com/klauspost/compress/**",
 ]
 precedence = "aggregate"
@@ -236,6 +228,14 @@ SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
+  "vendor/go.yaml.in/yaml/v2/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Other"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
   "vendor/golang.org/x/sys/**",
 ]
 precedence = "aggregate"
@@ -257,14 +257,6 @@ path = [
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Other"
 SPDX-License-Identifier = "BSD-2-Clause"
-
-[[annotations]]
-path = [
-  "vendor/gopkg.in/yaml.v2/**",
-]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Other"
-SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = [
