@@ -6,7 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sapcc/go-api-declarations v1.17.4
-	github.com/sapcc/go-bits v0.0.0-20250924092957-bcc75ecf4553
+	github.com/sapcc/go-bits v0.0.0-20251002190222-32e18bbcae76
 	github.com/spf13/pflag v1.0.10
 	go.uber.org/automaxprocs v1.6.0
 )
