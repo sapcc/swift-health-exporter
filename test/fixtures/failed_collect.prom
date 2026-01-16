@@ -31,7 +31,7 @@ swift_cluster_containers_sharding_audit_root_num_overlap{storage_ip="10.0.0.1"} 
 # HELP swift_cluster_containers_sharding_audit_root_success Container root DB auditor number of successes reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_root_success gauge
 swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.1"} 0
-# HELP swift_cluster_containers_sharding_audit_shard_attempted Container shard DB auditor number attmpted reported by the swift-recon tool.
+# HELP swift_cluster_containers_sharding_audit_shard_attempted Container shard DB auditor number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_shard_attempted gauge
 swift_cluster_containers_sharding_audit_shard_attempted{storage_ip="10.0.0.1"} 12
 # HELP swift_cluster_containers_sharding_audit_shard_failure Container shard DB auditor number of failures reported by the swift-recon tool.

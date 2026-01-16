@@ -107,7 +107,7 @@ func NewShardingTask(opts *TaskOpts) collector.Task {
 		containerShardingAuditShardAttempted: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name: "swift_cluster_containers_sharding_audit_shard_attempted",
-				Help: "Container shard DB auditor number attmpted reported by the swift-recon tool.",
+				Help: "Container shard DB auditor number attempted reported by the swift-recon tool.",
 			}, []string{"storage_ip"}),
 		containerShardingAuditShardFailure: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{

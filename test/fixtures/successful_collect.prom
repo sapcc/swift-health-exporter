@@ -64,7 +64,7 @@ swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.3"} 1
 swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.4"} 2
 swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.5"} 1
 swift_cluster_containers_sharding_audit_root_success{storage_ip="10.0.0.6"} 2
-# HELP swift_cluster_containers_sharding_audit_shard_attempted Container shard DB auditor number attmpted reported by the swift-recon tool.
+# HELP swift_cluster_containers_sharding_audit_shard_attempted Container shard DB auditor number attempted reported by the swift-recon tool.
 # TYPE swift_cluster_containers_sharding_audit_shard_attempted gauge
 swift_cluster_containers_sharding_audit_shard_attempted{storage_ip="10.0.0.1"} 12
 swift_cluster_containers_sharding_audit_shard_attempted{storage_ip="10.0.0.2"} 6
