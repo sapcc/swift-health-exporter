@@ -22,7 +22,6 @@ import (
 	"github.com/sapcc/go-bits/must"
 	"github.com/sapcc/go-bits/osext"
 	flag "github.com/spf13/pflag"
-	"go.uber.org/automaxprocs/maxprocs"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
@@ -80,8 +79,6 @@ func main() {
 	}
 
 	logg.ShowDebug = debug || osext.GetenvBool("DEBUG")
-	undoMaxprocs := must.Return(maxprocs.Set(maxprocs.Logger(logg.Debug)))
-	defer undoMaxprocs()
 
 	reconCollectorEnabled := !(noReconMD5Collector) ||
 		reconDiskUsageCollector ||
