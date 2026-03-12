@@ -36,6 +36,10 @@ func NewScraper(maxFailures int) *Scraper {
 // Run updates the metrics for all tasks periodically as per the scrapeInterval.
 func (s *Scraper) Run(ctx context.Context) {
 	for {
+		if ctx.Err() != nil {
+			return
+		}
+
 		startedAt := time.Now()
 		s.UpdateAllMetrics(ctx)
 		// Slow down if UpdateAllMetrics() finished faster than the desired scrape
