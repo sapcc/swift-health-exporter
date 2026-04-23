@@ -6,7 +6,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/sapcc/go-api-declarations v1.21.0
-	github.com/sapcc/go-bits v0.0.0-20260416170349-9b32d8192041
+	github.com/sapcc/go-bits v0.0.0-20260423021225-fb5e4523b6c5
 	github.com/spf13/pflag v1.0.10
 )
 
@@ -19,6 +19,6 @@ require (
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
