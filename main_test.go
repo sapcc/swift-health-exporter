@@ -4,13 +4,16 @@
 package main
 
 import (
+	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/sapcc/go-bits/assert"
+	"github.com/sapcc/go-bits/httptest"
+	"github.com/sapcc/go-bits/must"
 
 	"github.com/sapcc/swift-health-exporter/internal/collector"
 	"github.com/sapcc/swift-health-exporter/internal/collector/dispersion"
@@ -68,10 +71,8 @@ func testCollector(t *testing.T, dispersionReportPath, reconPath, fixturesPath s
 	registry.MustRegister(c)
 
 	s.UpdateAllMetrics(t.Context())
-	assert.HTTPRequest{
-		Method:       "GET",
-		Path:         "/metrics",
-		ExpectStatus: 200,
-		ExpectBody:   assert.FixtureFile(fixturesPath),
-	}.Check(t, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+
+	h := httptest.NewHandler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	h.RespondTo(t.Context(), "GET /metrics").
+		ExpectBody(t, http.StatusOK, must.ReturnT(os.ReadFile(fixturesPath))(t))
 }
