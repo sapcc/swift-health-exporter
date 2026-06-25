@@ -39,9 +39,8 @@ github.com/prometheus/procfs/internal/util
 # github.com/sapcc/go-api-declarations v1.24.0
 ## explicit; go 1.26
 github.com/sapcc/go-api-declarations/bininfo
-# github.com/sapcc/go-bits v0.0.0-20260618170412-b440edfb4e25
+# github.com/sapcc/go-bits v0.0.0-20260623114633-b9734b46a368
 ## explicit; go 1.26
-github.com/sapcc/go-bits/assert
 github.com/sapcc/go-bits/httpapi
 github.com/sapcc/go-bits/httpapi/pprofapi
 github.com/sapcc/go-bits/httpext
@@ -51,14 +50,13 @@ github.com/sapcc/go-bits/logg
 github.com/sapcc/go-bits/must
 github.com/sapcc/go-bits/osext
 github.com/sapcc/go-bits/syncext
-# github.com/sergi/go-diff v1.4.0
-## explicit; go 1.13
-github.com/sergi/go-diff/diffmatchpatch
 # github.com/spf13/pflag v1.0.10
 ## explicit; go 1.12
 github.com/spf13/pflag
-# go.xyrillian.de/gg v1.9.1
-## explicit; go 1.24
+# go.xyrillian.de/gg v1.10.1
+## explicit; go 1.26
+go.xyrillian.de/gg/assert
+go.xyrillian.de/gg/internal/path
 go.xyrillian.de/gg/jsonmatch
 go.xyrillian.de/gg/option
 # golang.org/x/sys v0.46.0
