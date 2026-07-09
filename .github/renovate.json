@@ -64,7 +64,8 @@
         ".github/workflows/checks.yaml",
         ".github/workflows/ci.yaml",
         ".github/workflows/codeql.yaml",
-        ".github/workflows/goreleaser.yaml"
+        ".github/workflows/goreleaser.yaml",
+        ".github/workflows/release-pr.yaml"
       ],
       "enabled": false
     }
