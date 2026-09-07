@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sapcc/go-api-declarations/bininfo"
@@ -169,8 +168,8 @@ func getExecutablePath(envKey, fileName string) string {
 
 type landingPageAPI struct{}
 
-func (landingPageAPI) AddTo(r *mux.Router) {
-	r.Methods("GET", "HEAD").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (landingPageAPI) AddTo(c *httpapi.Composer) {
+	c.Router().Methods("GET", "HEAD").Path("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		pageBytes := []byte(`<html>
 <head><title>Swift Health Exporter</title></head>
 <body>
