@@ -5,7 +5,7 @@ go 1.27
 require (
 	github.com/prometheus/client_golang v1.25.0
 	github.com/sapcc/go-api-declarations v1.25.1
-	github.com/sapcc/go-bits v0.0.0-20261105181628-13886743d3a7
+	github.com/sapcc/go-bits v0.0.0-20261112110216-dce3761314c8
 	github.com/spf13/pflag v1.0.10
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/prometheus/client_model v0.6.3 // indirect
 	github.com/prometheus/common v0.73.1 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
-	go.xyrillian.de/gg v1.19.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	go.xyrillian.de/gg v1.21.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
